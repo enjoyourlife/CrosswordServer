@@ -20,6 +20,7 @@
       var pomelo = window.pomelo;
       var host = "127.0.0.1";
       var port = "3010";
+      
       function show() {
         pomelo.init({
           host: host,
@@ -31,7 +32,77 @@
           });
         });
       }
+      
+      function login() {
+      
+        pomelo.init({
+          host: host,
+          port: port,
+          log: true
+        }, function() {
+        pomelo.request("connector.entryHandler.login", {
+					username: 'name',
+					rid: 'pwd'
+				}, function(data) {
+
+          });
+        });      
+      
+      }
+      
+      function send() {
+      
+        pomelo.request("crossword.gameHandler.send", {
+				rid: 'pwd',
+				content: 'message',
+				from: 'name',
+				target: '*'
+			}, function(data) {
+
+          });
+      
+      }
+      
+    console.log('js log ... ');
+      
+	//wait message from the server.
+	pomelo.on('onChat', function(data) {
+		console.log('onChat ... ');
+//		addMessage(data.from, data.target, data.msg);
+//		$("#chatHistory").show();
+//		if(data.from !== username)
+//			tip('message', data.from);
+	});
+
+	//update user list
+	pomelo.on('onAdd', function(data) {
+		console.log('onAdd ... %s',data.channel);
+//		var user = data.user;
+//		tip('online', user);
+//		addUser(user);
+	});
+
+	//update user list
+	pomelo.on('onLeave', function(data) {
+		console.log('onLeave ... ');
+//		var user = data.user;
+//		tip('offline', user);
+//		removeUser(user);
+	});
+
+
+	//handle disconect message, occours when the client is disconnect with servers
+	pomelo.on('disconnect', function(reason) {
+		console.log('disconnect ... ');
+//		showLogin();
+	});
+	      
+      
     </script>
+    
+
+        
+        
   </head>
   <body>
     <div class="g-doc">
@@ -52,6 +123,15 @@
       <div class="g-button">
         <input id="test" type="button" value="Test Game Server" onclick="show()"/>
       </div>
+      <div class="g-button">
+        <input id="test" type="button" value="Login Game Server" onclick="login()"/>
+      </div>
+      <div class="g-button">
+        <input id="test" type="button" value="Send Game Server" onclick="send()"/>
+      </div>      
     </div>
+    
+
+    
   </body>
 </html>

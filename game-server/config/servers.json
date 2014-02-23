@@ -2,21 +2,23 @@
   "development":{
     "connector": [
     {"id": "connector-server-1", "host": "127.0.0.1", "port": 3150, "clientPort": 3010, "frontend": true}
-    ],
+    ],  
     "crossword":[
-             {"id":"crossword-server-1", "host":"127.0.0.1", "port":6050},
-             {"id":"crossword-server-2", "host":"127.0.0.1", "port":6051},
-             {"id":"crossword-server-3", "host":"127.0.0.1", "port":6052}
-        ]
+             {"id":"crossword-server-1", "host":"127.0.0.1", "port":6050}
+        ],
+    "gate":[
+ 	       {"id": "gate-server-1", "host": "127.0.0.1", "clientPort": 3014, "frontend": true}
+ 	    ]
   },
   "production":{
     "connector": [
     {"id": "connector-server-1", "host": "127.0.0.1", "port": 3150, "clientPort": 3010, "frontend": true}
-    ],
+    ],     
     "crossword":[
-             {"id":"crossword-server-1", "host":"127.0.0.1", "port":6050},
-             {"id":"crossword-server-2", "host":"127.0.0.1", "port":6051},
-             {"id":"crossword-server-3", "host":"127.0.0.1", "port":6052}
-        ]
+             {"id":"crossword-server-1", "host":"127.0.0.1", "port":6050}
+        ],
+	  "gate":[
+	          {"id": "gate-server-1", "host": "127.0.0.1", "clientPort": 3014, "frontend": true}
+	       ]  
   }
 }
