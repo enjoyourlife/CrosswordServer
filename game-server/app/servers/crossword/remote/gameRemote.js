@@ -46,20 +46,33 @@ var GameRemote = function(app) {
  *
  */
 GameRemote.prototype.add = function(uid, sid, name, flag, cb) {
-	var channel = this.channelService.getChannel(name, flag);
 //	var channel = this.getValidChannel();
+	
+	var channel = this.channelService.getChannel(name, flag);
 
 	if( !! channel) {
 		channel.add(uid, sid);
+		
+		var username = uid.split('*')[0];
+		var param = {
+			route: 'onEnter',
+			user: username,
+			channel:name
+		};
+		channel.pushMessage(param);
+		
+		var m = channel.getMembers();
+		console.log("GameRemote.prototype.add >>name:%s members:%d",name,m.length);
+		if (!! m && m.length >= 2) {
+			var param = {
+					route: 'onGameStart',
+					user: username,
+					channel:name
+				};
+			channel.pushMessage(param);
+		}
+		
 	}
-	
-	var username = uid.split('*')[0];
-	var param = {
-		route: 'onAdd',
-		user: username,
-		channel:name
-	};
-	channel.pushMessage(param);
 
 	cb(this.get(name, flag));
 	
@@ -101,17 +114,34 @@ GameRemote.prototype.kick = function(uid, sid, name) {
 	console.log('GameRemote.prototype.kick ... [%s]',name);
 	
 //	console.log(channel);
-	
-
-	var username = uid.split('*')[0];
-	var param = {
-		route: 'onLeave',
-		user: username
-	};
-	channel.pushMessage(param);
-	
-	// leave channel
 	if( !! channel) {
-		channel.leave(uid, sid);
+		
+		var username = uid.split('*')[0];
+
+		var m = channel.getMembers();
+		if (!! m && m.length >= 2) {
+			var param = {
+					route: 'onGameStop',
+					user: username,
+					channel:name
+				};
+			channel.pushMessage(param);
+						
+		}
+		
+		var param = {
+				route: 'onExit',
+				user: username
+			};
+		channel.pushMessage(param);
+		
+		console.log("GameRemote.prototype.kick >>name:%s members:%d",name,m.length);
+	
+		// leave channel	
+		channel.leave(uid, sid);		
+		
+		console.log('GameRemote.prototype.kick ... [%s][%s][%s][%s]',uid,sid,name,username);
 	}
+	
+	
 };

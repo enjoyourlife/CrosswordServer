@@ -21,6 +21,30 @@
       var host = "127.0.0.1";
       var port = "3010";
       
+      function gateConnect() {
+      
+      	  var route = 'gate.gateHandler.queryEntry';
+		  pomelo.init({
+			host: window.location.hostname,
+			port: 3014,
+			log: true
+		  }, function() {
+			pomelo.request(route, {
+				uid: uid
+			}, function(data) {
+				pomelo.disconnect();
+				if(data.code === 500) {
+					showError(LOGIN_ERROR);
+					return;
+				}
+		        console.log("hello");
+			});
+		  });
+	  
+      }
+      
+      
+      
       function show() {
         pomelo.init({
           host: host,
@@ -33,7 +57,7 @@
         });
       }
       
-      function login() {
+      function loginA() {
       
         pomelo.init({
           host: host,
@@ -41,12 +65,66 @@
           log: true
         }, function() {
         pomelo.request("connector.entryHandler.login", {
-					username: 'name',
+					username: 'user1',
 					rid: 'pwd'
 				}, function(data) {
 
           });
         });      
+      
+      }
+      
+      function loginB() {
+      
+        pomelo.init({
+          host: host,
+          port: port,
+          log: true
+        }, function() {
+        pomelo.request("connector.entryHandler.login", {
+					username: 'user2',
+					rid: 'pwd'
+				}, function(data) {
+
+          });
+        });      
+      
+      }      
+      
+      function logout() {
+      
+        pomelo.request("connector.entryHandler.logout", {
+					username: 'user1',
+					rid: 'pwd'
+			}, function(data) {
+
+          });
+      
+      }
+      
+      function sitdown() {
+      
+        pomelo.request("connector.entryHandler.desk", {
+        			sit: 0,
+        			level: 0,
+					username: 'user1',
+					rid: 'pwd'
+			}, function(data) {
+
+          });
+      
+      }
+      
+      function situp() {
+      
+        pomelo.request("connector.entryHandler.desk", {
+        			sit: 1,
+        			level: 0,
+					username: 'user1',
+					rid: 'pwd'
+			}, function(data) {
+
+          });
       
       }
       
@@ -89,6 +167,20 @@
 //		tip('offline', user);
 //		removeUser(user);
 	});
+	
+	pomelo.on('onGameStart', function(data) {
+		console.log('onGameStart ... ');
+//		var user = data.user;
+//		tip('offline', user);
+//		removeUser(user);
+	});
+	
+	pomelo.on('onGameStop', function(data) {
+		console.log('onGameStop ... ');
+//		var user = data.user;
+//		tip('offline', user);
+//		removeUser(user);
+	});
 
 
 	//handle disconect message, occours when the client is disconnect with servers
@@ -120,12 +212,27 @@
         Home:
         <a href="https://github.com/NetEase/pomelo">https://github.com/NetEase/pomelo</a>
       </div>
+            <div class="g-button">
+        	<input id="test" type="button" value="Test Gate Server" onclick="gateConnect()"/>
+      </div>
       <div class="g-button">
         <input id="test" type="button" value="Test Game Server" onclick="show()"/>
       </div>
       <div class="g-button">
-        <input id="test" type="button" value="Login Game Server" onclick="login()"/>
-      </div>
+        <input id="test" type="button" value="Login A Game Server" onclick="loginA()"/>
+      </div>    
+      <div class="g-button">
+        <input id="test" type="button" value="Login B Game Server" onclick="loginB()"/>
+      </div>    
+      <div class="g-button">
+        <input id="test" type="button" value="Sitdown Game Server" onclick="sitdown()"/>
+      </div>        
+      <div class="g-button">
+        <input id="test" type="button" value="Situp Game Server" onclick="situp()"/>
+      </div>     
+      <div class="g-button">
+        <input id="test" type="button" value="Logout Game Server" onclick="logout()"/>
+      </div>                
       <div class="g-button">
         <input id="test" type="button" value="Send Game Server" onclick="send()"/>
       </div>      

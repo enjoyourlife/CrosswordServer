@@ -14,7 +14,7 @@ Handler.prototype.getValidChannel = function() {
 	for(var name in channels) {
 		var c = channels[name];
 		var m = c.getMembers();
-		console.log("var name <%s> %d in channels",name,m.length);
+		console.log("getValidChannel >>name:%s members:%d ",name,m.length);
 		if (!! m && m.length < 2) {
 			channel = c;
 			break;
@@ -26,7 +26,7 @@ Handler.prototype.getValidChannel = function() {
 		channel = this.channelService.getChannel(cname, true);
 	}
 	
-	console.log(channel);
+//	console.log(channel);
 	
 	return channel;
 }
@@ -61,33 +61,28 @@ Handler.prototype.register = function(msg, session, next) {
 
 	console.log('Handler.prototype.register >>> ');
 	
-  next(null, {code: 200, msg: 'crossword game server is ok.'});
-  //hello
+	next(null, {code: 200, msg: 'crossword game server is ok.'});
+
 };
 
 Handler.prototype.logout = function(msg, session, next) {
 	
-//	var mysql      = require('mysql');
-//	var conn = mysql.createConnection({
-//	  host     : '127.0.0.1',
-//	  database: 'test',
-//	  port: '3306',
-//	  user     : 'root',
-//	  password : 'kissme',
-//	});
-//
-//	conn.connect();
-//	
-//	conn.query('INSERT INTO user (name, password) VALUES (\'Wilson\', \'Champs-Elysees\')', 
-//			function(err, rows, fields) {
-//	    if (err) throw err;
-//	});
-//	
-//	conn.end();
+	var self = this;
+	var rid = msg.rid;
+	var uid = msg.username + '*' + rid
+	var sessionService = self.app.get('sessionService');
+	
+	if (session.uid != uid){
+		console.log('Handler.prototype.logout >>> Error uid...');
+	}
+	
 
 	console.log('Handler.prototype.logout >>> ');
 	
-  next(null, {code: 200, msg: 'crossword game server is ok.'});
+	next(null, {code: 200, result:0, msg: 'logout OK.'});
+	
+	sessionService.kick(session.uid, 'kick', null);
+
   //hello
 };
 
@@ -152,11 +147,17 @@ Handler.prototype.enter = function(msg, session, next) {
 
 	//duplicate log in
 	if( !! sessionService.getByUid(uid)) {
+		// 重复登录，则需要将之前的踢掉...		
+		sessionService.kick(uid, 'kick', null);
+		
+		/*
 		next(null, {
 			code: 500,
 			error: true
 		});
+		
 		return;
+		*/
 	}
 
 	session.bind(uid);
@@ -167,7 +168,17 @@ Handler.prototype.enter = function(msg, session, next) {
 		}
 	});
 	session.on('closed', onUserLeave.bind(null, self.app));
-
+	
+	console.log('enter >> ');
+//	console.log(session);
+	
+	next(null, {
+		code: 200,
+		result: 0,
+		msg: 'Login Success！'
+	});
+	
+	/*
 	var channel = this.getValidChannel();
 	
 	session.set('cid',channel.name);
@@ -176,15 +187,70 @@ Handler.prototype.enter = function(msg, session, next) {
 			console.error('set cid for session service failed! error is : %j', err.stack);
 		}
 	});
-	
-//	console.log(session);
-	
+
 	//put user into channel
 	self.app.rpc.crossword.gameRemote.add(session, uid, self.app.get('serverId'), channel.name, true, function(users){
 		next(null, {
 			users:users
 		});
 	});
+	*/
+	
+	
+
+};
+
+Handler.prototype.desk = function(msg, session, next) {
+	
+	var self = this;
+	var rid = msg.rid;
+	var uid = msg.username + '*' + rid
+	var sessionService = self.app.get('sessionService');
+	
+	console.log('desk >> ');
+	
+	var sit = msg.sit;	// 0:down 1:up
+	var level = msg.level;
+	
+	if (sit==0){
+		// 提取一个可用频道...
+		var channel = this.getValidChannel();
+		// 将频道名保存在session中...
+		session.set('cid',channel.name);
+		session.push('cid', function(err) {
+			if(err) {
+				console.error('set cid for session service failed! error is : %j', err.stack);
+			}
+		});
+		
+		
+		//put user into channel
+		self.app.rpc.crossword.gameRemote.add(session, session.uid, self.app.get('serverId'), channel.name, true, function(users){
+			next(null, {
+				users:users
+			});
+		});
+		
+	}else if (sit==1){
+		
+		self.app.rpc.crossword.gameRemote.kick(session, session.uid, self.app.get('serverId'), session.get('cid'), null);
+		
+		// 将频道名保存在session中...
+		session.set('cid','none');
+		session.push('cid', function(err) {
+			if(err) {
+				console.error('set cid for session service failed! error is : %j', err.stack);
+			}
+		});
+
+	}
+
+	next(null, {
+		code: 200,
+		result: 0,
+		msg: 'Login Success！'
+	});
+
 };
 
 /**
@@ -220,11 +286,10 @@ Handler.prototype.login = function(msg, session, next) {
 	    }else{
 			next(null, {
 				code: 500,
-				error: true
+				result: 1,
+				msg: 'Login Failed！'
 			});
 	    }
-	    
-	    
 	});
 	
 	conn.end();
@@ -243,6 +308,10 @@ var onUserLeave = function(app, session) {
 	if(!session || !session.uid) {
 		return;
 	}
+	
+	console.log('onUserLeave >> ');
+	
 //	console.log(session);
 	app.rpc.crossword.gameRemote.kick(session, session.uid, app.get('serverId'), session.get('cid'), null);
+	
 };
