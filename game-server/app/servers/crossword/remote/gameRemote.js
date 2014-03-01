@@ -53,20 +53,22 @@ GameRemote.prototype.add = function(uid, sid, name, flag, cb) {
 	if( !! channel) {
 		channel.add(uid, sid);
 		
+		var m = channel.getMembers();
+		
 		var username = uid.split('*')[0];
 		var param = {
 			route: 'onEnter',
 			user: username,
+			users: m,
 			channel:name
 		};
 		channel.pushMessage(param);
 		
-		var m = channel.getMembers();
+		
 		console.log("GameRemote.prototype.add >>name:%s members:%d",name,m.length);
 		if (!! m && m.length >= 2) {
 			var param = {
 					route: 'onGameStart',
-					user: username,
 					channel:name
 				};
 			channel.pushMessage(param);
@@ -116,24 +118,26 @@ GameRemote.prototype.kick = function(uid, sid, name) {
 //	console.log(channel);
 	if( !! channel) {
 		
+		var m = channel.getMembers();
+		
 		var username = uid.split('*')[0];
 
-		var m = channel.getMembers();
+		var param = {
+				route: 'onExit',
+				user: username,
+				users: m,
+				channel:name
+			};
+		channel.pushMessage(param);
+		
+		
 		if (!! m && m.length >= 2) {
 			var param = {
 					route: 'onGameStop',
-					user: username,
 					channel:name
 				};
 			channel.pushMessage(param);
-						
 		}
-		
-		var param = {
-				route: 'onExit',
-				user: username
-			};
-		channel.pushMessage(param);
 		
 		console.log("GameRemote.prototype.kick >>name:%s members:%d",name,m.length);
 	

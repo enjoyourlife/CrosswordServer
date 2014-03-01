@@ -68,13 +68,13 @@ Handler.prototype.register = function(msg, session, next) {
 Handler.prototype.logout = function(msg, session, next) {
 	
 	var self = this;
-	var rid = msg.rid;
-	var uid = msg.username + '*' + rid
+//	var rid = msg.rid;
+//	var uid = msg.username + '*' + rid;
 	var sessionService = self.app.get('sessionService');
 	
-	if (session.uid != uid){
-		console.log('Handler.prototype.logout >>> Error uid...');
-	}
+//	if (session.uid != uid){
+//		console.log('Handler.prototype.logout >>> Error uid...');
+//	}
 	
 
 	console.log('Handler.prototype.logout >>> ');
@@ -203,8 +203,8 @@ Handler.prototype.enter = function(msg, session, next) {
 Handler.prototype.desk = function(msg, session, next) {
 	
 	var self = this;
-	var rid = msg.rid;
-	var uid = msg.username + '*' + rid
+//	var rid = msg.rid;
+//	var uid = msg.username + '*' + rid
 	var sessionService = self.app.get('sessionService');
 	
 	console.log('desk >> ');

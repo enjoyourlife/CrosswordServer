@@ -94,8 +94,7 @@
       function logout() {
       
         pomelo.request("connector.entryHandler.logout", {
-					username: 'user1',
-					rid: 'pwd'
+					tag: 0
 			}, function(data) {
 
           });
@@ -106,9 +105,7 @@
       
         pomelo.request("connector.entryHandler.desk", {
         			sit: 0,
-        			level: 0,
-					username: 'user1',
-					rid: 'pwd'
+        			level: 0
 			}, function(data) {
 
           });
@@ -119,9 +116,7 @@
       
         pomelo.request("connector.entryHandler.desk", {
         			sit: 1,
-        			level: 0,
-					username: 'user1',
-					rid: 'pwd'
+        			level: 0
 			}, function(data) {
 
           });
@@ -153,16 +148,18 @@
 	});
 
 	//update user list
-	pomelo.on('onAdd', function(data) {
-		console.log('onAdd ... %s',data.channel);
+	pomelo.on('onEnter', function(data) {
+		console.log('onEnter ... %s',data.user);
+		var users = data.users;
+		console.log(users);
 //		var user = data.user;
 //		tip('online', user);
 //		addUser(user);
 	});
 
 	//update user list
-	pomelo.on('onLeave', function(data) {
-		console.log('onLeave ... ');
+	pomelo.on('onExit', function(data) {
+		console.log('onExit ... %s',data.user);
 //		var user = data.user;
 //		tip('offline', user);
 //		removeUser(user);
