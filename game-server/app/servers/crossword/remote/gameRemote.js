@@ -48,6 +48,7 @@ var GameRemote = function(app) {
  */
 GameRemote.prototype.add = function(uid, sid, name, flag, cb) {
 //	var channel = this.getValidChannel();
+	console.log('before GameRemote.prototype.add ... ');
 	
 	var channel = this.channelService.getChannel(name, flag);
 
@@ -79,7 +80,7 @@ GameRemote.prototype.add = function(uid, sid, name, flag, cb) {
 
 	cb(this.get(name, flag));
 	
-	console.log('GameRemote.prototype.add ... [%s][%s][%s][%s]',uid,sid,name,username);
+	console.log('GameRemote.prototype.add ... [%s][%s][%s]',uid,sid,name);
 };
 
 /**

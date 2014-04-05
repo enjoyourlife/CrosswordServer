@@ -250,11 +250,10 @@ Handler.prototype.desk = function(msg, session, next) {
 		
 		
 		//put user into channel
-		self.app.rpc.crossword.gameRemote.add(session, session.uid, self.app.get('serverId'), channel.name, true, function(users){
-			next(null, {
-				users:users
-			});
-		});
+		self.app.rpc.crossword.gameRemote.add(session, session.uid, self.app.get('serverId'), channel.name, true,
+				null
+//				function(users){next(null, {users:users});}
+		);
 		
 	}else if (sit==1){
 		
@@ -273,7 +272,7 @@ Handler.prototype.desk = function(msg, session, next) {
 	next(null, {
 		code: 200,
 		result: 0,
-		msg: 'Login Success£¡'
+		msg: 'Handler.prototype.desk'
 	});
 
 };
