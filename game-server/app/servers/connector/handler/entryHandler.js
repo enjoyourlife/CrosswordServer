@@ -1,3 +1,4 @@
+// 140330
 module.exports = function(app) {
   return new Handler(app);
 };
@@ -116,6 +117,28 @@ Handler.prototype.entry = function(msg, session, next) {
 //	
 //	conn.end();
 	
+	/*
+	"map_h":[
+	       [0,0,0,0,0],
+	       [0,1,1,1,1],
+	       [0,0,0,0,0],
+	       [2,2,2,2,0],
+	       [0,0,0,0,0],
+	       ],           
+           
+   "map_v":[
+            [2,0,0,0,0],
+            [2,0,0,2,0],
+            [2,0,0,2,0],
+            [2,0,0,2,0],
+            [0,0,0,2,0],
+            ],
+                    
+    "words":[
+
+             ], 
+	*/
+	
 	var fs = require('fs');
 	fs.readFile('./data/map0000.json',function(err,data){
 	    if(err) throw err;
@@ -148,6 +171,7 @@ Handler.prototype.enter = function(msg, session, next) {
 	//duplicate log in
 	if( !! sessionService.getByUid(uid)) {
 		// 重复登录，则需要将之前的踢掉...		
+		console.log('relogin >> kick!!!');
 		sessionService.kick(uid, 'kick', null);
 		
 		/*
@@ -211,6 +235,7 @@ Handler.prototype.desk = function(msg, session, next) {
 	
 	var sit = msg.sit;	// 0:down 1:up
 	var level = msg.level;
+	var type = msg.type;
 	
 	if (sit==0){
 		// 提取一个可用频道...
