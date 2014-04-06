@@ -51,18 +51,65 @@ Handler.prototype.register = function(msg, session, next) {
 	  password : 'kissme',
 	});
 
-	conn.connect();
-	
-	conn.query('INSERT INTO user (name, password) VALUES (\'Wilson\', \'Champs-Elysees\')', 
-			function(err, rows, fields) {
-	    if (err) throw err;
+	conn.connect(function(error, results) {
+		  if(error) {
+			  console.log('Connection Error: ' + error.message);
+			  return;
+		  }
+		  console.log('Connected to MySQL');
+		  
 	});
 	
-	conn.end();
-
-	console.log('Handler.prototype.register >>> ');
+	SQLInsertUser = function()
+	{
+		var sql = 'INSERT INTO user (name, password) VALUES (\''+msg.username+'\', \''+msg.rid+'\')';
+		console.log('SQLInsertUser >> '+sql);
+		conn.query(sql, 
+				function(err, rows, fields) {
+		    if (err) throw err;
+		    
+		    next(null, {code: 200, msg: 'crossword game server is ok.'});
+		});
+		
+		conn.end();
+	};
 	
-	next(null, {code: 200, msg: 'crossword game server is ok.'});
+	SQLFindUser = function()
+	{
+		var sql = 'SELECT * FROM user WHERE name=\''+msg.username+'\' AND password=\''+msg.rid+'\'';
+		console.log('SQLFindUser >> '+sql);
+		conn.query(sql, 
+				function(err, rows, fields) {
+		    if (err) throw err;
+		    
+		    console.log('SQLFindUser ..');
+		    
+		    if (rows.length==1){
+		    	
+//		    	conn.end();
+		    	console.log('SQLFindUser >>> end A');
+		    	next(null, {code: 500,result: 1,msg: 'Register Failed£¡'});
+		    	
+		    	conn.end();
+		    }else{
+		    	
+		    	console.log('SQLFindUser >>> end B');
+		    	SQLInsertUser();
+//		    	return;
+		    }
+		}
+		);		
+
+	};	
+	
+	SQLFindUser();
+//	SQLInsertUser();
+	
+	
+
+	console.log('Handler.prototype.register >>> end B');
+	
+	
 
 };
 
