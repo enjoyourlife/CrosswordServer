@@ -69,9 +69,22 @@ GameRemote.prototype.add = function(uid, sid, name, flag, cb) {
 		
 		console.log("GameRemote.prototype.add >>name:%s members:%d",name,m.length);
 		if (!! m && m.length >= 2) {
+			
+			var fs = require('fs');
+			var dataGame;
+			try{
+			var data = fs.readFileSync('./data/map0001.json');			
+			dataGame = JSON.parse(data);
+			}catch(err){}
+			
+			console.log(dataGame);
+			
 			var param = {
 					route: 'onGameStart',
-					channel:name
+					user: username,
+					users: m,
+					channel:name,
+					game:dataGame
 				};
 			channel.pushMessage(param);
 		}
@@ -136,6 +149,8 @@ GameRemote.prototype.kick = function(uid, sid, name) {
 		if (!! m && m.length >= 2) {
 			var param = {
 					route: 'onGameStop',
+					user: username,
+					users: m,
 					channel:name
 				};
 			channel.pushMessage(param);

@@ -68,7 +68,7 @@ Handler.prototype.register = function(msg, session, next) {
 				function(err, rows, fields) {
 		    if (err) throw err;
 		    
-		    next(null, {code: 200, msg: 'crossword game server is ok.'});
+		    next(null, {code: 200,result: 0, msg: 'crossword game server is ok.'});
 		});
 		
 		conn.end();
@@ -187,14 +187,14 @@ Handler.prototype.entry = function(msg, session, next) {
 	*/
 	
 	var fs = require('fs');
-	fs.readFile('./data/map0000.json',function(err,data){
+	fs.readFile('./data/map0001.json',function(err,data){
 	    if(err) throw err;
 	    var jsonObj = JSON.parse(data);
 	    console.log(jsonObj);
 	});
 
 	console.log('Handler.prototype.entry >>> ');
-  next(null, {code: 200, msg: 'crossword game server is ok.'});
+	next(null, {code: 200, msg: 'crossword game server is ok.'});
   //hello
 };
 
