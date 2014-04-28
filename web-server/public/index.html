@@ -101,21 +101,49 @@
       
       }
       
-      function sitdown() {
-      
-        pomelo.request("connector.entryHandler.desk", {
-        			sit: 0,
-        			level: 0,
-        			type: 0
-			}, function(data) {
+      function sitdownA() {
+          pomelo.init({
+              host: host,
+              port: port,
+              log: true
+          }, function() {
+            pomelo.request("connector.entryHandler.enter", {
+                        sit: 0,
+                        level: 0,
+                        type: 0,
+                        gid: 'crossword',
+                        uid: '24c9e15e52afc47c225b757e7bee1f9d',
+                        usr: 'user1'
+                }, function(data) {
 
+              });
           });
       
+      }
+
+      function sitdownB() {
+          pomelo.init({
+              host: host,
+              port: port,
+              log: true
+          }, function() {
+              pomelo.request("connector.entryHandler.enter", {
+                  sit: 0,
+                  level: 0,
+                  type: 0,
+                  gid: 'crossword',
+                  uid: '7e58d63b60197ceb55a1c487989a3720',
+                  usr: 'user2'
+              }, function(data) {
+
+              });
+          });
+
       }
       
       function situp() {
       
-        pomelo.request("connector.entryHandler.desk", {
+        pomelo.request("connector.entryHandler.exit", {
         			sit: 1,
         			level: 0
 			}, function(data) {
@@ -140,8 +168,9 @@
     console.log('js log ... ');
       
 	//wait message from the server.
-	pomelo.on('onChat', function(data) {
-		console.log('onChat ... ');
+	pomelo.on('onUserChat', function(data) {
+		console.log('onUserChat ... ');
+        console.log(data);
 //		addMessage(data.from, data.target, data.msg);
 //		$("#chatHistory").show();
 //		if(data.from !== username)
@@ -149,22 +178,27 @@
 	});
 
 	//update user list
-	pomelo.on('onEnter', function(data) {
-		console.log('onEnter ... %s',data.user);
-		var users = data.users;
-		console.log(users);
+	pomelo.on('onUserEnter', function(data) {
+		console.log('onUserEnter ...');
+		console.log(data);
 //		var user = data.user;
 //		tip('online', user);
 //		addUser(user);
 	});
 
 	//update user list
-	pomelo.on('onExit', function(data) {
-		console.log('onExit ... %s',data.user);
+	pomelo.on('onUserExit', function(data) {
+		console.log('onExit ... ');
+        console.log(data);
 //		var user = data.user;
 //		tip('offline', user);
 //		removeUser(user);
 	});
+
+    pomelo.on('onGameReady', function(data) {
+        console.log('onGameReady ... ');
+        console.log(data);
+    });
 	
 	pomelo.on('onGameStart', function(data) {
 		console.log('onGameStart ... ');
@@ -219,14 +253,17 @@
       </div>
       <div class="g-button">
         <input id="test" type="button" value="Login A Game Server" onclick="loginA()"/>
-      </div>    
+      </div>
       <div class="g-button">
         <input id="test" type="button" value="Login B Game Server" onclick="loginB()"/>
-      </div>    
+      </div>
       <div class="g-button">
-        <input id="test" type="button" value="Sitdown Game Server" onclick="sitdown()"/>
-      </div>        
-      <div class="g-button">
+        <input id="test" type="button" value="Sitdown A Game Server" onclick="sitdownA()"/>
+      </div>
+    <div class="g-button">
+        <input id="test" type="button" value="Sitdown B Game Server" onclick="sitdownB()"/>
+    </div>
+        <div class="g-button">
         <input id="test" type="button" value="Situp Game Server" onclick="situp()"/>
       </div>     
       <div class="g-button">

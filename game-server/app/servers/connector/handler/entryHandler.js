@@ -1,388 +1,248 @@
-// 140330
+var GMySQL = require('../../../services/mysql/GMySQL');
+var GUtils = require('../../../services/utils/GUtils');
+
+
 module.exports = function(app) {
   return new Handler(app);
 };
 
 var Handler = function(app) {
   this.app = app;
-  this.channelService = app.get('channelService');
 };
 
-Handler.prototype.getValidChannel = function() {
-	var channels = this.channelService.channels;
-	var channel;
-	var count = 0;
-	for(var name in channels) {
-		var c = channels[name];
-		var m = c.getMembers();
-		console.log("getValidChannel >>name:%s members:%d ",name,m.length);
-		if (!! m && m.length < 2) {
-			channel = c;
-			break;
-		}
-		count ++;
-	}
-	if (!channel){
-		var cname = "channel"+count;
-		channel = this.channelService.getChannel(cname, true);
-	}
-	
-//	console.log(channel);
-	
-	return channel;
-}
+// ---------------------------------------------------- //
 
-/**
- * New client entry chat server.
- *
- * @param  {Object}   msg     request message
- * @param  {Object}   session current session object
- * @param  {Function} next    next stemp callback
- * @return {Void}
- */
 Handler.prototype.register = function(msg, session, next) {
-	
-	var mysql      = require('mysql');
-	var conn = mysql.createConnection({
-	  host     : '127.0.0.1',
-	  database: 'test',
-	  port: '3306',
-	  user     : 'root',
-	  password : 'kissme',
-	});
 
-	conn.connect(function(error, results) {
-		  if(error) {
-			  console.log('Connection Error: ' + error.message);
-			  return;
-		  }
-		  console.log('Connected to MySQL');
-		  
-	});
-	
-	SQLInsertUser = function()
-	{
-		var sql = 'INSERT INTO user (name, password) VALUES (\''+msg.username+'\', \''+msg.rid+'\')';
-		console.log('SQLInsertUser >> '+sql);
-		conn.query(sql, 
-				function(err, rows, fields) {
-		    if (err) throw err;
-		    
-		    next(null, {code: 200,result: 0, msg: 'crossword game server is ok.'});
-		});
-		
-		conn.end();
-	};
-	
-	SQLFindUser = function()
-	{
-		var sql = 'SELECT * FROM user WHERE name=\''+msg.username+'\' AND password=\''+msg.rid+'\'';
-		console.log('SQLFindUser >> '+sql);
-		conn.query(sql, 
-				function(err, rows, fields) {
-		    if (err) throw err;
-		    
-		    console.log('SQLFindUser ..');
-		    
-		    if (rows.length==1){
-		    	
-//		    	conn.end();
-		    	console.log('SQLFindUser >>> end A');
-		    	next(null, {code: 500,result: 1,msg: 'Register Failed£¡'});
-		    	
-		    	conn.end();
-		    }else{
-		    	
-		    	console.log('SQLFindUser >>> end B');
-		    	SQLInsertUser();
-//		    	return;
-		    }
-		}
-		);		
+    var conn = GMySQL();
 
-	};	
-	
-	SQLFindUser();
-//	SQLInsertUser();
-	
-	
+    var usr = msg.usr;
+    var pwd = msg.pwd;
 
-	console.log('Handler.prototype.register >>> end B');
-	
-	
+    var SQLInsertUser = function()
+    {
+        var sql = 'INSERT INTO user (name, password) VALUES (\''+usr+'\', \''+pwd+'\')';
+        conn.query(sql,
+            function(err, rows, fields) {
+                if (err) throw err;
+
+                next(null, {code: 200,result: 0, msg: 'insert user ok.'});
+                conn.end();
+            });
+    };
+
+    var SQLFindUser = function()
+    {
+        var sql = 'SELECT * FROM user WHERE name=\''+usr+'\' AND password=\''+pwd+'\'';
+        conn.query(sql,
+            function(err, rows, fields) {
+                if (err) throw err;
+
+                if (rows.length==1){
+                    next(null, {code: 500,result: 1,msg: 'Register Failedï¿½ï¿½'});
+                    conn.end();
+                }else{
+                    SQLInsertUser();
+                }
+            }
+        );
+    };
+
+    conn.connect(function(error, results) {
+        if(error) {
+            console.log('Connection Error: ' + error.message);
+            conn.end();
+            return;
+        }
+        console.log('Connected to MySQL');
+
+        SQLFindUser();
+    });
+
+};
+
+Handler.prototype.login = function(msg, session, next) {
+
+    var self = this;
+
+    var conn = GMySQL();
+
+    var usr = msg.usr;
+    var pwd = msg.pwd;
+    var mid = GUtils.MD5(usr);
+
+    console.log(mid);
+
+    var SQLLoginUser = function()
+    {
+        conn.query('SELECT * FROM user WHERE name=\''+usr+'\' AND password=\''+pwd+'\'',
+            function(err, rows, fields) {
+                if (err) throw err;
+
+                if (rows.length==1){
+
+                    session.bind(mid,null);
+                    session.on('closed', onUserLogout.bind(null, self.app));
+
+                    next(null, {code: 200,result: 0,uid: mid});
+
+                }else{
+                    next(null, {code: 500,result: 1,msg: 'Login Failedï¿½ï¿½'});
+                }
+
+                conn.end();
+            });
+    };
+
+    conn.connect(function(error, results) {
+        if(error) {
+            console.log('Connection Error: ' + error.message);
+            conn.end();
+            return;
+        }
+        console.log('Connected to MySQL');
+        SQLLoginUser();
+    });
 
 };
 
 Handler.prototype.logout = function(msg, session, next) {
-	
-	var self = this;
+
+    var self = this;
 //	var rid = msg.rid;
 //	var uid = msg.username + '*' + rid;
-	var sessionService = self.app.get('sessionService');
-	
+    var sessionService = self.app.get('sessionService');
+
 //	if (session.uid != uid){
 //		console.log('Handler.prototype.logout >>> Error uid...');
 //	}
-	
 
-	console.log('Handler.prototype.logout >>> ');
-	
-	next(null, {code: 200, result:0, msg: 'logout OK.'});
-	
-	sessionService.kick(session.uid, 'kick', null);
+    console.log('Handler.prototype.logout >>> ');
 
-  //hello
+    next(null, {code: 200, result:0, msg: 'logout OK.'});
+
+    sessionService.kick(session.uid, 'kick', null);
+};
+
+var onUserLogout = function(app, session) {
+
+    if(!session || !session.uid) {
+        return;
+    }
+
 };
 
 
-/**
- * New client entry chat server.
- *
- * @param  {Object}   msg     request message
- * @param  {Object}   session current session object
- * @param  {Function} next    next stemp callback
- * @return {Void}
- */
-Handler.prototype.entry = function(msg, session, next) {
-	
-//	var mysql      = require('mysql');
-//	var conn = mysql.createConnection({
-//	  host     : '127.0.0.1',
-//	  database: 'test',
-//	  port: '3306',
-//	  user     : 'root',
-//	  password : 'kissme',
-//	});
-//
-//	conn.connect();
-//	
-//	conn.query('SELECT * FROM user', function(err, rows, fields) {
-//	    if (err) throw err;
-//	    console.log('SELECT * FROM user ... %d',rows.length);
-//	    console.log(rows);
-//	});
-//	
-//	conn.end();
-	
-	/*
-	"map_h":[
-	       [0,0,0,0,0],
-	       [0,1,1,1,1],
-	       [0,0,0,0,0],
-	       [2,2,2,2,0],
-	       [0,0,0,0,0],
-	       ],           
-           
-   "map_v":[
-            [2,0,0,0,0],
-            [2,0,0,2,0],
-            [2,0,0,2,0],
-            [2,0,0,2,0],
-            [0,0,0,2,0],
-            ],
-                    
-    "words":[
+Handler.prototype.list = function(msg, session, next) {
 
-             ], 
-	*/
-	
-	var fs = require('fs');
-	fs.readFile('./data/map0001.json',function(err,data){
-	    if(err) throw err;
-	    var jsonObj = JSON.parse(data);
-	    console.log(jsonObj);
-	});
+    var self = this;
+    var gid = msg.gid;
 
-	console.log('Handler.prototype.entry >>> ');
-	next(null, {code: 200, msg: 'crossword game server is ok.'});
-  //hello
+    var rpc = self.app.rpc[gid];
+    if (!!rpc){
+        rpc.gameRemote.list(session,function(err,rooms){
+            next(null, {code: 200,result: 0,rooms:rooms});
+        });
+    }else{
+        next(null, {code: 500,result: 0});
+    }
+
 };
 
-
-
-/**
- * New client entry chat server.
- *
- * @param  {Object}   msg     request message
- * @param  {Object}   session current session object
- * @param  {Function} next    next stemp callback
- * @return {Void}
- */
 Handler.prototype.enter = function(msg, session, next) {
-	
-	var self = this;
-	var rid = msg.rid;
-	var uid = msg.username + '*' + rid;
-	var sessionService = self.app.get('sessionService');
 
-	//duplicate log in
-	if( !! sessionService.getByUid(uid)) {
-		// ÖØ¸´µÇÂ¼£¬ÔòÐèÒª½«Ö®Ç°µÄÌßµô...		
-		console.log('relogin >> kick!!!');
-		sessionService.kick(uid, 'kick', null);
-		
-		/*
-		next(null, {
-			code: 500,
-			error: true
-		});
-		
-		return;
-		*/
-	}
+    var self = this;
 
-	session.bind(uid);
-	session.set('rid', rid);
-	session.push('rid', function(err) {
-		if(err) {
-			console.error('set rid for session service failed! error is : %j', err.stack);
-		}
-	});
-	session.on('closed', onUserLeave.bind(null, self.app));
-	
-	console.log('enter >> ');
-//	console.log(session);
-	
-	next(null, {
-		code: 200,
-		result: 0,
-		msg: 'Login Success£¡'
-	});
-	
-	/*
-	var channel = this.getValidChannel();
-	
-	session.set('cid',channel.name);
-	session.push('cid', function(err) {
-		if(err) {
-			console.error('set cid for session service failed! error is : %j', err.stack);
-		}
-	});
+    var xuid = msg.uid;
+    var uid = msg.usr;
+    var gid = msg.gid;  // æ¸¸æˆIDï¼Œè¯·ä¼ å…¥crossword
+    var xcid = msg.cid;  // é¢‘é“IDï¼Œè‡ªåŠ¨åŒ¹é…çš„ä¸ç”¨ä¼ ã€‚
 
-	//put user into channel
-	self.app.rpc.crossword.gameRemote.add(session, uid, self.app.get('serverId'), channel.name, true, function(users){
-		next(null, {
-			users:users
-		});
-	});
-	*/
-	
-	
+    if (!xuid || !uid || !gid){
+        next(null, {code: 500});
+        return;
+    }
 
-};
+    var sessionService = self.app.get('sessionService');
+/*
+    // æ£€æŸ¥ç™»å½•sessionã€‚
+    if( ! sessionService.getByUid(xuid)) {
+        next(null, {code: 500});
+        return;
+    }
+*/
+    // kick if login again.
+    if( !! sessionService.getByUid(uid)) {
+        sessionService.kick(uid, 'kick', null);
+    }
 
-Handler.prototype.desk = function(msg, session, next) {
-	
-	var self = this;
-//	var rid = msg.rid;
-//	var uid = msg.username + '*' + rid
-	var sessionService = self.app.get('sessionService');
-	
-	console.log('desk >> ');
-	
-	var sit = msg.sit;	// 0:down 1:up
-	var level = msg.level;
-	var type = msg.type;
-	
-	if (sit==0){
-		// ÌáÈ¡Ò»¸ö¿ÉÓÃÆµµÀ...
-		var channel = this.getValidChannel();
-		// ½«ÆµµÀÃû±£´æÔÚsessionÖÐ...
-		session.set('cid',channel.name);
-		session.push('cid', function(err) {
-			if(err) {
-				console.error('set cid for session service failed! error is : %j', err.stack);
-			}
-		});
-		
-		
-		//put user into channel
-		self.app.rpc.crossword.gameRemote.add(session, session.uid, self.app.get('serverId'), channel.name, true,
-				null
-//				function(users){next(null, {users:users});}
-		);
-		
-	}else if (sit==1){
-		
-		self.app.rpc.crossword.gameRemote.kick(session, session.uid, self.app.get('serverId'), session.get('cid'), null);
-		
-		// ½«ÆµµÀÃû±£´æÔÚsessionÖÐ...
-		session.set('cid','none');
-		session.push('cid', function(err) {
-			if(err) {
-				console.error('set cid for session service failed! error is : %j', err.stack);
-			}
-		});
+    var rpc = self.app.rpc[gid];
 
-	}
+    if (!!rpc){
+        // do session config.
+        session.bind(uid,null);
+        session.on('closed', onUserLeave.bind(null, self.app));
 
-	next(null, {
-		code: 200,
-		result: 0,
-		msg: 'Handler.prototype.desk'
-	});
+        // add channel for session.
+        rpc.gameRemote.add(session,
+            uid, self.app.get('serverId'),xcid,
+            function(err,cid,user){
+                if(err){
+                    console.log(err);
+                    return;
+                }
+                // set session settings.
+                session.set('cid', cid);
+                session.push('cid', function(err) {
+                    if(err) {
+                        console.error('set cid failed! error: %j', err.stack);
+                    }
+                });
+
+                session.set('gid', gid);
+                session.push('gid', function(err) {
+                    if(err) {
+                        console.error('set gid failed! error: %j', err.stack);
+                    }
+                });
+                next(null, {code: 200,user: user});
+            });
+
+    }else{
+        next(null, {code: 500});
+        sessionService.kick(uid, 'kick', null);
+    }
 
 };
 
-/**
- * New client entry chat server.
- *
- * @param  {Object}   msg     request message
- * @param  {Object}   session current session object
- * @param  {Function} next    next stemp callback
- * @return {Void}
- */
-Handler.prototype.login = function(msg, session, next) {
+Handler.prototype.exit = function(msg, session, next) {
 
-	var self = this;
-	// login
-	var mysql      = require('mysql');
-	var conn = mysql.createConnection({
-	  host     : '127.0.0.1',
-	  database: 'test',
-	  port: '3306',
-	  user     : 'root',
-	  password : 'kissme',
-	});
+    if (!session.uid){
+        return;
+    }
 
-	conn.connect();
-	
-	conn.query('SELECT * FROM user WHERE name=\''+msg.username+'\' AND password=\''+msg.rid+'\'', 
-			function(err, rows, fields) {
-	    if (err) throw err;
-	    console.log('SELECT * FROM user >> for login %d',rows.length);
-	    console.log(rows);
-	    if (rows.length==1){
-	    	self.enter(msg, session, next);
-	    }else{
-			next(null, {
-				code: 500,
-				result: 1,
-				msg: 'Login Failed£¡'
-			});
-	    }
-	});
-	
-	conn.end();
-	
-	console.log('login >> ');
+    var self = this;
+    var rpc = self.app.rpc[session.get('gid')];
+    if (!!rpc){
+        rpc.gameRemote.kick(session,
+            session.uid, self.app.get('serverId'), session.get('cid'),
+            function(err){});
+    }
+
+    next(null, {code: 200});
 };
 
-/**
- * User log out handler
- *
- * @param {Object} app current application
- * @param {Object} session current session object
- *
- */
 var onUserLeave = function(app, session) {
-	if(!session || !session.uid) {
-		return;
-	}
-	
-	console.log('onUserLeave >> ');
-	
-//	console.log(session);
-	app.rpc.crossword.gameRemote.kick(session, session.uid, app.get('serverId'), session.get('cid'), null);
-	
+
+    if(!session || !session.uid) {
+        return;
+    }
+
+    var rpc = app.rpc[session.get('gid')];
+    if (!!rpc){
+        rpc.gameRemote.kick(session,
+            session.uid, app.get('serverId'), session.get('cid'),
+            function(err){});
+    }
+
 };
