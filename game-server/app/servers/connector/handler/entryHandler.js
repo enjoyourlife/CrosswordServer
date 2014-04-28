@@ -19,6 +19,11 @@ Handler.prototype.register = function(msg, session, next) {
     var usr = msg.usr;
     var pwd = msg.pwd;
 
+    if (!usr || !pwd){
+        next(null, {code: 500});
+        return;
+    }
+
     var SQLInsertUser = function()
     {
         var sql = 'INSERT INTO user (name, password) VALUES (\''+usr+'\', \''+pwd+'\')';
@@ -69,6 +74,12 @@ Handler.prototype.login = function(msg, session, next) {
 
     var usr = msg.usr;
     var pwd = msg.pwd;
+
+    if (!usr || !pwd){
+        next(null, {code: 500});
+        return;
+    }
+
     var mid = GUtils.MD5(usr);
 
     console.log(mid);

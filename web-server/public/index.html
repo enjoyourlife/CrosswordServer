@@ -65,8 +65,8 @@
           log: true
         }, function() {
         pomelo.request("connector.entryHandler.login", {
-					username: 'user1',
-					rid: 'pwd'
+					usr: 'user1',
+					pwd: 'pwd'
 				}, function(data) {
 
           });
@@ -82,8 +82,8 @@
           log: true
         }, function() {
         pomelo.request("connector.entryHandler.login", {
-					username: 'user2',
-					rid: 'pwd'
+					usr: 'user2',
+					pwd: 'pwd'
 				}, function(data) {
 
           });
@@ -158,7 +158,8 @@
 				rid: 'pwd',
 				content: 'message',
 				from: 'name',
-				target: '*'
+				target: '*',
+                val: 2
 			}, function(data) {
 
           });
@@ -188,7 +189,7 @@
 
 	//update user list
 	pomelo.on('onUserExit', function(data) {
-		console.log('onExit ... ');
+		console.log('onUserExit ... ');
         console.log(data);
 //		var user = data.user;
 //		tip('offline', user);
@@ -199,7 +200,12 @@
         console.log('onGameReady ... ');
         console.log(data);
     });
-	
+
+      pomelo.on('onGameProc', function(data) {
+          console.log('onGameProc ... ');
+          console.log(data);
+      });
+
 	pomelo.on('onGameStart', function(data) {
 		console.log('onGameStart ... ');
 		console.log(data);		
@@ -210,6 +216,7 @@
 	
 	pomelo.on('onGameStop', function(data) {
 		console.log('onGameStop ... ');
+        console.log(data);
 //		var user = data.user;
 //		tip('offline', user);
 //		removeUser(user);

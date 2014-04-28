@@ -15,13 +15,9 @@ app.configure('production|development', 'master', function(){
             req.connection.socket.remoteAddress;
     };
 
-    var http = require('http');
-    http.createServer(function (req, res) {
-        res.writeHead(200, {'Content-Type': 'text/plain'});
-        var ip = getClientIp(req);
-        res.end(ip.toString());
-    }).listen(1337);
-    console.log('HTTP Server running at http://127.0.0.1:1337/');
+    var GHttp = require('./app/services/http/GHttp');
+    GHttp.createServer();
+
 });
 
 app.configure('production|development', 'connector', function(){

@@ -14,9 +14,50 @@ var GCODE = {
     }
 };
 
+var GUser = function(idx){
+    this.idx = idx;
+    this.uid = null;
+    this.chess = null;
+};
+
+GUser.prototype.initChess = function(chess){
+    this.chess = [];
+    var words = chess['words'];
+    if (!!words){
+        for (var i = 0 ; i < words.length ; ++ i){
+            this.chess.push(0);
+        }
+    }
+};
+
+GUser.prototype.setChess = function(pos){
+    this.chess[pos] = 1;
+};
+
+GUser.prototype.getChess = function(){
+    return this.chess;
+};
+
+GUser.prototype.isWin = function(){
+    if (this.uid == null){
+        return false;
+    }
+
+    var win = true;
+    for (var i = 0 ; i < this.chess.length ; ++ i){
+        if (this.chess[i] == 0){
+            win = false;
+        }
+    }
+    return win;
+};
+
     // Room State: OPEN READY GAME
 var GRoom = function(channel){
-    this.users = [{uid:null,dat:null},{uid:null,dat:null}];
+    this.users = [];
+    for (var i = 0 ; i < GCODE.ROOM.USER_SIZE ; ++ i){
+        this.users.push(new GUser(i));
+    }
     this.channel = channel;
     this.cid = channel.name;
     this.door = GCODE.ROOM.G_ROOM_OPEN;
@@ -49,7 +90,6 @@ GRoom.prototype.addUser = function(uid,sid){
         var user = users[i];
         if (!user.uid){
             user.uid = uid;
-            user.dat = {};
             this.usr_cnt ++;
             break;
         }
@@ -58,7 +98,8 @@ GRoom.prototype.addUser = function(uid,sid){
     var param = {
         route: 'onUserEnter',
         uid: uid,
-        channel:this.cid
+        cid:this.cid,
+        users: this.getUsers(false)
     };
     this.pushMessage(param);
 
@@ -69,20 +110,21 @@ GRoom.prototype.addUser = function(uid,sid){
 
 GRoom.prototype.delUser = function(uid,sid){
 
+    var user = this.getUser(uid);
+    if (!!user){
+        user.uid = null;
+        this.usr_cnt --;
+    }
+
     var param = {
         route: 'onUserExit',
         uid: uid,
-        channel:this.cid
+        cid: this.cid,
+        users: this.getUsers(false)
     };
     this.pushMessage(param);
 
     this.channel.leave(uid,sid);
-    var user = this.getUser(uid);
-    if (!!user){
-        user.uid = null;
-        user.dat = null;
-        this.usr_cnt --;
-    }
 
     if (this.getUserCount()>0){
         this.stopGame();
@@ -110,6 +152,20 @@ GRoom.prototype.getUser = function(uid){
     return user_get;
 };
 
+GRoom.prototype.getUsers = function(is_chess){
+    var sdata = [];
+    var users = this.users;
+    for (var i = 0 , len = users.length ; i < len ; ++ i){
+        var usr = users[i];
+        if (is_chess){
+            sdata.push({idx:usr.idx,uid:usr.uid,chess:usr.getChess()});
+        }else{
+            sdata.push({idx:usr.idx,uid:usr.uid});
+        }
+    }
+    return sdata;
+};
+
 GRoom.prototype.setUser = function(uid,key,val){
     if (this.door!=GCODE.ROOM.G_ROOM_GAME){
         return;
@@ -117,22 +173,17 @@ GRoom.prototype.setUser = function(uid,key,val){
 
     var user = this.getUser(uid);
     if (!!user){
-        user.dat[key] = val;
-
-        var sdata = [];
-        var users = this.users;
-        for (var i = 0 , len = users.length ; i < len ; ++ i){
-            var usr = users[i];
-            sdata.push({uid:usr.uid,val:this.getUserData(usr.uid,'game')});
-        }
+//        user.dat[key] = val;
+        user.setChess(val);
 
         var param = {
             route: 'onGameProc',
-            users:sdata
+            users: this.getUsers(true)
         };
 
         this.pushMessage(param);
     }
+
     this.doLogic();
 };
 
@@ -155,12 +206,18 @@ GRoom.prototype.autoStart = function() {
 
     this.chess = GUtils.JsonFromFile('./data/map0001.json');
 
+    var users = this.users;
+    for (var i = 0 , len = users.length ; i < len ; ++ i){
+        var user = users[i];
+        user.initChess(this.chess);
+    }
+
     this.tid = setTimeout(
         function(){
 
             var param = {
                 route: 'onGameStart',
-                chess: this.chess
+                chess: self.chess
             };
             self.pushMessage(param);
 
@@ -172,9 +229,10 @@ GRoom.prototype.autoStart = function() {
 };
 
 GRoom.prototype.stopGame = function() {
+
     var param = {
         route: 'onGameStop',
-        users:this.users
+        users:this.getUsers(true)
     };
     this.pushMessage(param);
 
@@ -194,7 +252,7 @@ GRoom.prototype.stopGame = function() {
     }
     */
 };
-
+/*
 GRoom.prototype.getUserData = function(uid,key) {
     var user = this.getUser(uid);
     if (!!user && !!user.dat){
@@ -202,39 +260,15 @@ GRoom.prototype.getUserData = function(uid,key) {
     }
     return null;
 };
-
+*/
 GRoom.prototype.doLogic = function() {
     var users = this.users;
-    var usrA = this.getUserData(users[0].uid,'game');
-    var usrB = this.getUserData(users[1].uid,'game');
+    var usrA = users[0];
+    var usrB = users[1];
 
-/*
-    if (usrA && usrA < this.distance){
-
-    }else{
-
-    }
-*/
-
-    if ((usrA && usrA >= this.distance) ||
-        (usrB && usrB >= this.distance)){
+    if (usrA.isWin() || usrB.isWin()){
         this.stopGame();
     }
-
-
-
-     /*
-    if (!usrA || !usrB){
-        return;
-    }
-    if ((usrA - usrB) == 1 || (usrA - usrB) == -2){
-        // usrA win.
-    }
-    if ((usrB - usrA) == 1 || (usrB - usrA) == -2){
-        // usrB win.
-    }
-    */
-
 };
 
 var GGameHall = function(app) {
