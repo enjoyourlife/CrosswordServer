@@ -171,9 +171,9 @@ var reqRegister = function(msg,request, response) {
 
 };
 
-exports.createServer = function(){
+exports.createServer = function(port){
 
-    var port = (conf.Port || 80);
+    if (!port){port = (conf.Port || 80);};
 
     http.createServer(function (request, response) {
 
@@ -197,9 +197,18 @@ exports.createServer = function(){
             response.writeHead(200, {'Content-Type': 'text/plain'});
             response.end(getRemoteIp(request).toString());
 
+        }else if (fname=='download'){
+
+            realPath = path.join(conf.Root, "crossword.zip" );
+            reqHttpHandle(realPath,request, response);
+
         }else{
 
-            reqHttpHandle(realPath,request, response);
+            response.writeHead(404, {'Content-Type': 'text/plain'});
+            response.write("<h3>404: Not Found</h3>");
+            response.end();
+
+//            reqHttpHandle(realPath,request, response);
         }
 
     }).listen(port);
@@ -207,4 +216,3 @@ exports.createServer = function(){
     console.log('HTTP Server running at http://localhost:%d/',port);
 };
 
-// -------------------------------------------- //

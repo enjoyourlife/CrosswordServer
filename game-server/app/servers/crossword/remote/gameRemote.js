@@ -1,4 +1,4 @@
-// 140330
+
 module.exports = function(app) {
 	return new GameRemote(app);
 };
@@ -14,7 +14,13 @@ GameRemote.prototype.add = function(uid, sid, cid, cb) {
 
     console.log('before GameRemote.prototype.add ...[%s][%s]',uid,sid);
 
-    var room = this.gameHall.getOpenRoom();
+    console.log(cid);
+
+    if (!cid || !cid.type || !cid.level){
+        cb(new Error('Null arg'),null,null);
+    }
+
+    var room = this.gameHall.getOpenRoom(cid);
 
     room.addUser(uid,sid);
 

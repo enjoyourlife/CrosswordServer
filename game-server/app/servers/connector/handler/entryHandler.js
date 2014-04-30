@@ -200,6 +200,7 @@ Handler.prototype.enter = function(msg, session, next) {
             function(err,cid,user){
                 if(err){
                     console.log(err);
+                    next(null, {code: 500});
                     return;
                 }
                 // set session settings.

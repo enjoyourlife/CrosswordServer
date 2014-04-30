@@ -20,7 +20,7 @@
       var pomelo = window.pomelo;
       var host = "127.0.0.1";
       var port = "3010";
-      
+      // window.location.hostname
       function gateConnect() {
       
       	  var route = 'gate.gateHandler.queryEntry';
@@ -30,14 +30,14 @@
 			log: true
 		  }, function() {
 			pomelo.request(route, {
-				uid: uid
+				uid: 'usr1'
 			}, function(data) {
 				pomelo.disconnect();
 				if(data.code === 500) {
 					showError(LOGIN_ERROR);
 					return;
 				}
-		        console.log("hello");
+		        console.log(data);
 			});
 		  });
 	  
@@ -109,11 +109,10 @@
           }, function() {
             pomelo.request("connector.entryHandler.enter", {
                         sit: 0,
-                        level: 0,
-                        type: 0,
                         gid: 'crossword',
                         uid: '24c9e15e52afc47c225b757e7bee1f9d',
-                        usr: 'user1'
+                        usr: 'user1',
+                        cid: {type:2,level:3}
                 }, function(data) {
 
               });

@@ -53,21 +53,24 @@ GUser.prototype.isWin = function(){
 };
 
     // Room State: OPEN READY GAME
-var GRoom = function(channel){
+var GRoom = function(channel,xcid){
     this.users = [];
     for (var i = 0 ; i < GCODE.ROOM.USER_SIZE ; ++ i){
         this.users.push(new GUser(i));
     }
     this.channel = channel;
     this.cid = channel.name;
+    this.xcid = xcid;
     this.door = GCODE.ROOM.G_ROOM_OPEN;
     this.tid = null;
+    this.iid = null;
     this.usr_cnt = 0;
+    this.time_cnt = 0;
     this.chess = null;
 };
 
-GRoom.prototype.isOpen = function(){
-    return (this.door == GCODE.ROOM.G_ROOM_OPEN);
+GRoom.prototype.isOpen = function(xcid){
+    return (this.xcid == xcid && this.door == GCODE.ROOM.G_ROOM_OPEN);
 };
 
 GRoom.prototype.getUserCount = function(){
@@ -171,10 +174,12 @@ GRoom.prototype.setUser = function(uid,key,val){
         return;
     }
 
-    var user = this.getUser(uid);
-    if (!!user){
-//        user.dat[key] = val;
-        user.setChess(val);
+    if (this.xcid.type==1){
+
+        var users = this.users;
+
+        users[0].setChess(val);
+        users[1].setChess(val);
 
         var param = {
             route: 'onGameProc',
@@ -182,13 +187,49 @@ GRoom.prototype.setUser = function(uid,key,val){
         };
 
         this.pushMessage(param);
+
+    }else{
+        var user = this.getUser(uid);
+        if (!!user){
+
+            user.setChess(val);
+
+            var param = {
+                route: 'onGameProc',
+                users: this.getUsers(true)
+            };
+
+            this.pushMessage(param);
+        }
     }
+
+
 
     this.doLogic();
 };
 
 GRoom.prototype.pushMessage = function(route, msg, opts, cb) {
     this.channel.pushMessage(route,msg,opts,cb);
+};
+
+GRoom.prototype.startTime = function() {
+    var self = this;
+    this.time_cnt = 0;
+    this.iid = setInterval(
+        function(){
+
+            if (self.time_cnt >= 3){
+                self.stopGame();
+            }else{
+                self.time_cnt ++;
+                var param = {
+                    route: 'onGameTime',
+                    time:   self.time_cnt
+                };
+                self.pushMessage(param);
+            }
+
+        },50000);
 };
 
 GRoom.prototype.autoStart = function() {
@@ -223,6 +264,10 @@ GRoom.prototype.autoStart = function() {
 
             self.door = GCODE.ROOM.G_ROOM_GAME;
             self.tid = null;
+
+            if (self.xcid.type==1){
+                self.startTime();
+            }
         }
         ,3000);
 
@@ -239,6 +284,11 @@ GRoom.prototype.stopGame = function() {
     if (!!this.tid){
         clearTimeout(this.tid);
         this.tid = null;
+    }
+
+    if (!!this.iid){
+        clearInterval(this.iid);
+        this.iid = null;
     }
 
     // 小型房间的设定是：停止游戏后，直到所有玩家退出前，不会再开放。
@@ -283,7 +333,7 @@ GGameHall.prototype.getRoomById = function(cid) {
     return this.rooms[cid];
 };
 
-GGameHall.prototype.getOpenRoom = function() {
+GGameHall.prototype.getOpenRoom = function(xcid) {
 
     var rooms = this.rooms;
     var room_cnt = 0;
@@ -294,7 +344,7 @@ GGameHall.prototype.getOpenRoom = function() {
         // 先找有人的房间...
         for (var cid in rooms){
             room = rooms[cid];
-            if (room.isOpen() && room.getUserCount()==1){
+            if (room.isOpen(xcid) && room.getUserCount()==1){
                 room_open = room;
                 break;
             }
@@ -305,7 +355,7 @@ GGameHall.prototype.getOpenRoom = function() {
 
         for (var cid in rooms){
             room = rooms[cid];
-            if (room.isOpen()){
+            if (room.isOpen(xcid)){
                 room_open = room;
                 break;
             }
@@ -317,10 +367,8 @@ GGameHall.prototype.getOpenRoom = function() {
         var cid = "channel"+room_cnt;
         var channelService = this.app.get('channelService');
         var channel = channelService.getChannel(cid, true);
-        room_open = rooms[cid] = new GRoom(channel);
+        room_open = rooms[cid] = new GRoom(channel,xcid);
     }
-
-//    console.log(room_open);
 
     return room_open;
 };

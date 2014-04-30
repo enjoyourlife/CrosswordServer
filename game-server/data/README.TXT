@@ -1,3 +1,4 @@
+//pomelo start [development | production] [--daemon]
 
 #include <ctype.h>
 #include <xstring>

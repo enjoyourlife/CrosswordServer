@@ -35,6 +35,7 @@ handler.queryEntry = function(msg, session, next) {
 	}
 	// here we just start `ONE` connector server, so we return the connectors[0] 
 	var res = connectors[0];
+
 	next(null, {
 		code: 200,
 		host: res.host,
