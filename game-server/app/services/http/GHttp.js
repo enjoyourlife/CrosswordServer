@@ -199,6 +199,10 @@ exports.createServer = function(port){
 
         }else if (fname=='download'){
 
+            var arg = url.parse(request.url).query;
+            var msg = querystring.parse(arg);
+            // use msg : level,count,type
+
             realPath = path.join(conf.Root, "crossword.zip" );
             reqHttpHandle(realPath,request, response);
 

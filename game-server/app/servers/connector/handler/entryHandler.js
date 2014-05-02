@@ -11,6 +11,18 @@ var Handler = function(app) {
 };
 
 // ---------------------------------------------------- //
+Handler.prototype.dologin = function(msg, session, next){
+
+    var self = this;
+
+    var mid = GUtils.MD5(msg.usr);
+    console.log(mid);
+    session.bind(mid,null);
+    session.on('closed', onUserLogout.bind(null, self.app));
+
+    next(null, {code: 200,uid: mid});
+
+};
 
 Handler.prototype.register = function(msg, session, next) {
 
@@ -24,6 +36,8 @@ Handler.prototype.register = function(msg, session, next) {
         return;
     }
 
+    var self = this;
+
     var SQLInsertUser = function()
     {
         var sql = 'INSERT INTO user (name, password) VALUES (\''+usr+'\', \''+pwd+'\')';
@@ -31,7 +45,8 @@ Handler.prototype.register = function(msg, session, next) {
             function(err, rows, fields) {
                 if (err) throw err;
 
-                next(null, {code: 200,result: 0, msg: 'insert user ok.'});
+                self.dologin({usr:usr},session,next);
+
                 conn.end();
             });
     };
@@ -44,7 +59,7 @@ Handler.prototype.register = function(msg, session, next) {
                 if (err) throw err;
 
                 if (rows.length==1){
-                    next(null, {code: 500,result: 1,msg: 'Register Failed��'});
+                    next(null, {code: 500,msg: 'Register Failed��'});
                     conn.end();
                 }else{
                     SQLInsertUser();
@@ -80,9 +95,7 @@ Handler.prototype.login = function(msg, session, next) {
         return;
     }
 
-    var mid = GUtils.MD5(usr);
 
-    console.log(mid);
 
     var SQLLoginUser = function()
     {
@@ -92,13 +105,10 @@ Handler.prototype.login = function(msg, session, next) {
 
                 if (rows.length==1){
 
-                    session.bind(mid,null);
-                    session.on('closed', onUserLogout.bind(null, self.app));
-
-                    next(null, {code: 200,result: 0,uid: mid});
+                    self.dologin({usr:usr},session,next);
 
                 }else{
-                    next(null, {code: 500,result: 1,msg: 'Login Failed��'});
+                    next(null, {code: 500,msg: 'Login Failed��'});
                 }
 
                 conn.end();
@@ -120,17 +130,9 @@ Handler.prototype.login = function(msg, session, next) {
 Handler.prototype.logout = function(msg, session, next) {
 
     var self = this;
-//	var rid = msg.rid;
-//	var uid = msg.username + '*' + rid;
     var sessionService = self.app.get('sessionService');
 
-//	if (session.uid != uid){
-//		console.log('Handler.prototype.logout >>> Error uid...');
-//	}
-
-    console.log('Handler.prototype.logout >>> ');
-
-    next(null, {code: 200, result:0, msg: 'logout OK.'});
+    next(null, {code: 200, msg: 'logout OK.'});
 
     sessionService.kick(session.uid, 'kick', null);
 };
@@ -176,13 +178,13 @@ Handler.prototype.enter = function(msg, session, next) {
 
     var sessionService = self.app.get('sessionService');
 /*
-    // 检查登录session。
+    // 如果不想检查登录，请注释掉这一段。
     if( ! sessionService.getByUid(xuid)) {
         next(null, {code: 500});
         return;
     }
 */
-    // kick if login again.
+    // 检查重复登录.
     if( !! sessionService.getByUid(uid)) {
         sessionService.kick(uid, 'kick', null);
     }
@@ -197,7 +199,7 @@ Handler.prototype.enter = function(msg, session, next) {
         // add channel for session.
         rpc.gameRemote.add(session,
             uid, self.app.get('serverId'),xcid,
-            function(err,cid,user){
+            function(err,cid,users){
                 if(err){
                     console.log(err);
                     next(null, {code: 500});
@@ -217,7 +219,7 @@ Handler.prototype.enter = function(msg, session, next) {
                         console.error('set gid failed! error: %j', err.stack);
                     }
                 });
-                next(null, {code: 200,user: user});
+                next(null, {code: 200,users: users});
             });
 
     }else{
@@ -229,7 +231,8 @@ Handler.prototype.enter = function(msg, session, next) {
 
 Handler.prototype.exit = function(msg, session, next) {
 
-    if (!session.uid){
+    if (!session.uid || !session.get('gid')){
+        next(null, {code: 500});
         return;
     }
 
@@ -246,7 +249,7 @@ Handler.prototype.exit = function(msg, session, next) {
 
 var onUserLeave = function(app, session) {
 
-    if(!session || !session.uid) {
+    if(!session || !session.uid || !session.get('gid')) {
         return;
     }
 

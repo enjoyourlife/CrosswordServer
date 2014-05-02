@@ -17,7 +17,8 @@ GameRemote.prototype.add = function(uid, sid, cid, cb) {
     console.log(cid);
 
     if (!cid || !cid.type || !cid.level){
-        cb(new Error('Null arg'),null,null);
+        cb(new Error('Null arg'));
+        return;
     }
 
     var room = this.gameHall.getOpenRoom(cid);
@@ -33,6 +34,11 @@ GameRemote.prototype.add = function(uid, sid, cid, cb) {
 GameRemote.prototype.kick = function(uid, sid, cid , cb) {
 
     console.log('before GameRemote.prototype.kick ...[%s][%s][%s]',uid,sid,cid);
+
+    if (!uid || !sid || !cid){
+        cb(new Error('Null arg'));
+        return;
+    }
 
     var room = this.gameHall.getRoomById(cid);
 
