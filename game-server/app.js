@@ -14,6 +14,9 @@ app.configure('production|development', 'master', function(){
     var GHttp = require('./app/services/http/GHttp');
     GHttp.createServer(port);
 
+//    var GUtils = require('./app/services/utils/GUtils');
+//    var fname = GUtils.genMapPath(10);
+//    console.log(fname);
 });
 
 app.configure('production|development', 'connector', function(){

@@ -48,6 +48,7 @@ var http = require('http');
 var url=require('url');
 var fs=require('fs');
 var path=require('path');
+var zlib = require('zlib');
 var querystring = require('querystring');
 var GMySQL = require('../mysql/GMySQL');
 
@@ -202,6 +203,8 @@ exports.createServer = function(port){
             var arg = url.parse(request.url).query;
             var msg = querystring.parse(arg);
             // use msg : level,count,type
+
+
 
             realPath = path.join(conf.Root, "crossword.zip" );
             reqHttpHandle(realPath,request, response);

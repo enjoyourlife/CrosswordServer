@@ -30,8 +30,22 @@ GUser.prototype.initChess = function(chess){
     }
 };
 
+GUser.prototype.setChessByPos = function(pos){
+    if (pos >= 0 && pos < this.chess.length){
+        this.chess[pos] = 1;
+    }
+};
+
 GUser.prototype.setChess = function(pos){
-    this.chess[pos] = 1;
+    if (pos instanceof Array){
+        var posx;
+        for (var i = 0 ; i < pos.length ; ++ i) {
+            posx = pos[i];
+            this.setChessByPos(posx);
+        }
+    }else{
+        this.setChessByPos(pos);
+    }
 };
 
 GUser.prototype.getChess = function(){
@@ -245,7 +259,9 @@ GRoom.prototype.autoStart = function() {
     };
     self.pushMessage(param);
 
-    this.chess = GUtils.JsonFromFile('./data/map0001.json');
+    var fname = GUtils.genMapPath(this.xcid.level);
+
+    this.chess = GUtils.JsonFromFile('./data/'+fname+'.json');
 
     var users = this.users;
     for (var i = 0 , len = users.length ; i < len ; ++ i){
