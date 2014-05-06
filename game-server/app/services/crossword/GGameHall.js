@@ -83,8 +83,16 @@ var GRoom = function(channel,xcid){
     this.chess = null;
 };
 
-GRoom.prototype.isOpen = function(xcid){
-    return (this.xcid == xcid && this.door == GCODE.ROOM.G_ROOM_OPEN);
+GRoom.prototype.isType = function(xcid){
+    if (this.xcid.level==xcid.level &&
+        this.xcid.type==xcid.type){
+        return true;
+    }
+    return false;
+};
+
+GRoom.prototype.isOpen = function(){
+    return this.door == GCODE.ROOM.G_ROOM_OPEN;
 };
 
 GRoom.prototype.getUserCount = function(){
@@ -188,7 +196,7 @@ GRoom.prototype.setUser = function(uid,key,val){
         return;
     }
 
-    if (this.xcid.type==1){
+    if (this.xcid.type!=1){
 
         var users = this.users;
 
@@ -253,6 +261,7 @@ GRoom.prototype.autoStart = function() {
 
     var self = this;
 
+    this.door = GCODE.ROOM.G_ROOM_READY;
     var param = {
         route: 'onGameReady'
 
@@ -260,9 +269,9 @@ GRoom.prototype.autoStart = function() {
     self.pushMessage(param);
 
     var fname = GUtils.genMapPath(this.xcid.level);
-
+//    console.log(fname);
     this.chess = GUtils.JsonFromFile('./data/'+fname+'.json');
-
+//    console.log(this.chess);
     var users = this.users;
     for (var i = 0 , len = users.length ; i < len ; ++ i){
         var user = users[i];
@@ -360,7 +369,7 @@ GGameHall.prototype.getOpenRoom = function(xcid) {
         // 先找有人的房间...
         for (var cid in rooms){
             room = rooms[cid];
-            if (room.isOpen(xcid) && room.getUserCount()==1){
+            if (room.isType(xcid) && room.isOpen() && room.getUserCount()==1){
                 room_open = room;
                 break;
             }
@@ -371,7 +380,7 @@ GGameHall.prototype.getOpenRoom = function(xcid) {
 
         for (var cid in rooms){
             room = rooms[cid];
-            if (room.isOpen(xcid)){
+            if (room.isType(xcid) && room.isOpen() && room.isOpen(xcid)){
                 room_open = room;
                 break;
             }

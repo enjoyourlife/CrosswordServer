@@ -17,7 +17,7 @@ GameRemote.prototype.add = function(uid, sid, cid, cb) {
     console.log(cid);
 
     if (!cid || !cid.type || !cid.level){
-        cb(new Error('Null arg'));
+        cb('err',null,null);
         return;
     }
 

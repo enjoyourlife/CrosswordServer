@@ -112,9 +112,9 @@
                         gid: 'crossword',
                         uid: '24c9e15e52afc47c225b757e7bee1f9d',
                         usr: 'user1',
-                        cid: {type:2,level:3}
+                        cid: {type:2,level:10}
                 }, function(data) {
-
+//                console.log(data);
               });
           });
       
@@ -128,13 +128,12 @@
           }, function() {
               pomelo.request("connector.entryHandler.enter", {
                   sit: 0,
-                  level: 0,
-                  type: 0,
                   gid: 'crossword',
                   uid: '7e58d63b60197ceb55a1c487989a3720',
-                  usr: 'user2'
+                  usr: 'user2',
+                  cid: {type:2,level:10}
               }, function(data) {
-
+//                  console.log(data);
               });
           });
 
@@ -146,7 +145,7 @@
         			sit: 1,
         			level: 0
 			}, function(data) {
-
+//            console.log(data);
           });
       
       }
