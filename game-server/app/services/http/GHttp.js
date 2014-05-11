@@ -49,16 +49,23 @@ var url=require('url');
 var fs=require('fs');
 var path=require('path');
 var zlib = require('zlib');
+var dns = require('dns');
+var net = require('net');
 var querystring = require('querystring');
 var GMySQL = require('../mysql/GMySQL');
 
-var getRemoteIp = function(req) {
+var getClientIp = function(req) {
     return req.headers['x-forwarded-for'] ||
         req.connection.remoteAddress ||
         req.socket.remoteAddress ||
         req.connection.socket.remoteAddress;
 };
 
+/*
+var getRemoteIp = function(req) {
+
+};
+*/
 var reqHttpHandle = function(realPath, request, response) {
 
     var ext = path.extname(realPath);
@@ -172,6 +179,11 @@ var reqRegister = function(msg,request, response) {
 
 };
 
+var getHost = function(input){
+    var hostx = input.split(':');
+    return hostx[0];
+};
+
 exports.createServer = function(port){
 
     if (!port){port = (conf.Port || 80);};
@@ -196,15 +208,29 @@ exports.createServer = function(port){
         }else if (fname=='getip'){
 
             response.writeHead(200, {'Content-Type': 'text/plain'});
-            response.end(getRemoteIp(request).toString());
+//            response.end(getRemoteIp(request).toString());
+
+            var host = getHost(request.headers['host']);
+            if (net.isIPv4(host)){
+                response.end(host);
+            }else{
+                dns.resolve4(host, function (err, addresses) {
+                    if (err){
+                        response.end('127.0.0.1');
+                        throw err;
+                    }else{
+                        console.log(addresses);
+                        console.log('addresses: ' + JSON.stringify(addresses));
+                        response.end(addresses[0]);
+                    }
+                });
+            }
 
         }else if (fname=='download'){
 
-            var arg = url.parse(request.url).query;
-            var msg = querystring.parse(arg);
+//            var arg = url.parse(request.url).query;
+//            var msg = querystring.parse(arg);
             // use msg : level,count,type
-
-
 
             realPath = path.join(conf.Root, "crossword.zip" );
             reqHttpHandle(realPath,request, response);

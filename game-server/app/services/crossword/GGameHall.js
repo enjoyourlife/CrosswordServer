@@ -75,6 +75,7 @@ var GRoom = function(channel,xcid){
     this.channel = channel;
     this.cid = channel.name;
     this.xcid = xcid;
+    this.xcid.time = 300;
     this.door = GCODE.ROOM.G_ROOM_OPEN;
     this.tid = null;
     this.iid = null;
@@ -240,7 +241,7 @@ GRoom.prototype.startTime = function() {
     this.iid = setInterval(
         function(){
 
-            if (self.time_cnt >= 3){
+            if (self.time_cnt >= self.xcid.time/5){
                 self.stopGame();
             }else{
                 self.time_cnt ++;
@@ -263,8 +264,8 @@ GRoom.prototype.autoStart = function() {
 
     this.door = GCODE.ROOM.G_ROOM_READY;
     var param = {
-        route: 'onGameReady'
-
+        route: 'onGameReady',
+        cid: self.xcid
     };
     self.pushMessage(param);
 
@@ -290,7 +291,7 @@ GRoom.prototype.autoStart = function() {
             self.door = GCODE.ROOM.G_ROOM_GAME;
             self.tid = null;
 
-            if (self.xcid.type==1){
+            if (self.xcid.type!=1){
                 self.startTime();
             }
         }
