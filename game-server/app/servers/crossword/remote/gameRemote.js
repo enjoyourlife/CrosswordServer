@@ -6,6 +6,7 @@ module.exports = function(app) {
 var GameRemote = function(app) {
 	this.app = app;
     this.gameHall = app.get('GGameHall');
+    this.gameConfig = app.get('GConfig');
 };
 
 // ---------------------------------------------------- //
@@ -45,4 +46,8 @@ GameRemote.prototype.kick = function(uid, sid, cid , cb) {
     room.delUser(uid,sid);
 
     cb(null);
+};
+
+GameRemote.prototype.cfg = function(cb) {
+    cb(null,this.gameConfig.config);
 };

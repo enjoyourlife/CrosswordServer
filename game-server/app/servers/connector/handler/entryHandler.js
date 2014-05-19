@@ -15,12 +15,22 @@ Handler.prototype.dologin = function(msg, session, next){
 
     var self = this;
 
-    var mid = GUtils.MD5(msg.usr);
-    console.log(mid);
-    session.bind(mid,null);
-    session.on('closed', onUserLogout.bind(null, self.app));
+    var gid = msg.gid;
 
-    next(null, {code: 200,uid: mid});
+    var rpc = self.app.rpc[gid];
+    if (!!rpc){
+
+        var mid = GUtils.MD5(msg.usr);
+        console.log(mid);
+        session.bind(mid,null);
+        session.on('closed', onUserLogout.bind(null, self.app));
+
+        rpc.gameRemote.cfg(session,function(err,cfg){
+            next(null, {code: 200,uid: mid,config:cfg});
+        });
+    }else{
+        next(null, {code: 500,result: 0});
+    }
 
 };
 
@@ -45,7 +55,7 @@ Handler.prototype.register = function(msg, session, next) {
             function(err, rows, fields) {
                 if (err) throw err;
 
-                self.dologin({usr:usr},session,next);
+                self.dologin(msg,session,next);
 
                 conn.end();
             });
@@ -105,7 +115,7 @@ Handler.prototype.login = function(msg, session, next) {
 
                 if (rows.length==1){
 
-                    self.dologin({usr:usr},session,next);
+                    self.dologin(msg,session,next);
 
                 }else{
                     next(null, {code: 500,msg: 'Login Failed��'});
@@ -145,6 +155,60 @@ var onUserLogout = function(app, session) {
 
 };
 
+
+Handler.prototype.pay = function(msg, session, next) {
+
+    var conn = GMySQL();
+
+    var usr = msg.usr;
+    var pwd = msg.pwd;
+    var val = msg.val;
+    if (!usr || !pwd){
+        next(null, {code: 500});
+        return;
+    }
+
+    var SQLAddMoney = function(gold)
+    {
+        var sql = 'UPDATE user SET gold='+(gold+val)+' WHERE name=\''+usr+'\'';
+        conn.query(sql,
+            function(err, rows, fields) {
+                if (err) throw err;
+
+                next(null, {code: 200});
+                conn.end();
+            });
+    };
+
+    var SQLGetMoney = function()
+    {
+        var sql = 'SELECT * FROM user WHERE name=\''+usr+'\' AND password=\''+pwd+'\'';
+        conn.query(sql,
+            function(err, rows, fields) {
+                if (err) throw err;
+
+                if (rows.length==1){
+                    SQLAddMoney(rows[0]['gold']);
+                }else{
+                    next(null, {code: 500,msg: 'Register Failed��'});
+                    conn.end();
+                }
+            }
+        );
+    };
+
+    conn.connect(function(error, results) {
+        if(error) {
+            console.log('Connection Error: ' + error.message);
+            conn.end();
+            return;
+        }
+        console.log('Connected to MySQL');
+
+        SQLGetMoney();
+    });
+
+};
 
 Handler.prototype.list = function(msg, session, next) {
 

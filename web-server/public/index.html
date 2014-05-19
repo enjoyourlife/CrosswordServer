@@ -66,9 +66,10 @@
         }, function() {
         pomelo.request("connector.entryHandler.login", {
 					usr: 'user1',
-					pwd: 'pwd'
+					pwd: 'pwd',
+                    gid: 'crossword'
 				}, function(data) {
-
+            console.log(data);
           });
         });      
       
@@ -83,9 +84,10 @@
         }, function() {
         pomelo.request("connector.entryHandler.login", {
 					usr: 'user2',
-					pwd: 'pwd'
+					pwd: 'pwd',
+                    gid: 'crossword'
 				}, function(data) {
-
+            console.log(data);
           });
         });      
       
@@ -148,6 +150,28 @@
 //            console.log(data);
           });
       
+      }
+
+      function pay() {
+
+          pomelo.request("connector.entryHandler.pay", {
+              usr: 'user1',
+              pwd: 'pwd',
+              val: 8
+          }, function(data) {
+              console.log(data);
+          });
+
+      }
+
+      function use() {
+
+          pomelo.request("crossword.gameHandler.use", {
+              iid: 0
+          }, function(data) {
+              console.log(data);
+          });
+
       }
       
       function send() {
@@ -276,7 +300,16 @@
       </div>                
       <div class="g-button">
         <input id="test" type="button" value="Send Game Server" onclick="send()"/>
-      </div>      
+      </div>
+
+        <div class="g-button">
+            <input id="test" type="button" value="Pay Game Server" onclick="pay()"/>
+        </div>
+
+        <div class="g-button">
+            <input id="test" type="button" value="Use Game Server" onclick="use()"/>
+        </div>
+
     </div>
     
 
