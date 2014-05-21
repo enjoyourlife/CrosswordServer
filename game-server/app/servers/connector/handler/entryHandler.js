@@ -36,7 +36,7 @@ Handler.prototype.dologin = function(msg, session, next){
 
 Handler.prototype.register = function(msg, session, next) {
 
-    var conn = GMySQL();
+    var mysql = new GMySQL();
 
     var usr = msg.usr;
     var pwd = msg.pwd;
@@ -51,26 +51,26 @@ Handler.prototype.register = function(msg, session, next) {
     var SQLInsertUser = function()
     {
         var sql = 'INSERT INTO user (name, password) VALUES (\''+usr+'\', \''+pwd+'\')';
-        conn.query(sql,
+        mysql.conn.query(sql,
             function(err, rows, fields) {
                 if (err) throw err;
 
                 self.dologin(msg,session,next);
 
-                conn.end();
+                mysql.conn.end();
             });
     };
 
     var SQLFindUser = function()
     {
         var sql = 'SELECT * FROM user WHERE name=\''+usr+'\' AND password=\''+pwd+'\'';
-        conn.query(sql,
+        mysql.conn.query(sql,
             function(err, rows, fields) {
                 if (err) throw err;
 
                 if (rows.length==1){
                     next(null, {code: 500,msg: 'Register Failed��'});
-                    conn.end();
+                    mysql.conn.end();
                 }else{
                     SQLInsertUser();
                 }
@@ -78,10 +78,10 @@ Handler.prototype.register = function(msg, session, next) {
         );
     };
 
-    conn.connect(function(error, results) {
+    mysql.conn.connect(function(error, results) {
         if(error) {
             console.log('Connection Error: ' + error.message);
-            conn.end();
+            mysql.conn.end();
             return;
         }
         console.log('Connected to MySQL');
@@ -95,7 +95,7 @@ Handler.prototype.login = function(msg, session, next) {
 
     var self = this;
 
-    var conn = GMySQL();
+    var mysql = new GMySQL();
 
     var usr = msg.usr;
     var pwd = msg.pwd;
@@ -105,11 +105,9 @@ Handler.prototype.login = function(msg, session, next) {
         return;
     }
 
-
-
     var SQLLoginUser = function()
     {
-        conn.query('SELECT * FROM user WHERE name=\''+usr+'\' AND password=\''+pwd+'\'',
+        mysql.conn.query('SELECT * FROM user WHERE name=\''+usr+'\' AND password=\''+pwd+'\'',
             function(err, rows, fields) {
                 if (err) throw err;
 
@@ -121,14 +119,14 @@ Handler.prototype.login = function(msg, session, next) {
                     next(null, {code: 500,msg: 'Login Failed��'});
                 }
 
-                conn.end();
+                mysql.conn.end();
             });
     };
 
-    conn.connect(function(error, results) {
+    mysql.conn.connect(function(error, results) {
         if(error) {
             console.log('Connection Error: ' + error.message);
-            conn.end();
+            mysql.conn.end();
             return;
         }
         console.log('Connected to MySQL');
@@ -158,55 +156,17 @@ var onUserLogout = function(app, session) {
 
 Handler.prototype.pay = function(msg, session, next) {
 
-    var conn = GMySQL();
+    var mysql = new GMySQL();
 
     var usr = msg.usr;
     var pwd = msg.pwd;
     var val = msg.val;
-    if (!usr || !pwd){
+    if (!usr || !pwd || !val){
         next(null, {code: 500});
         return;
     }
 
-    var SQLAddMoney = function(gold)
-    {
-        var sql = 'UPDATE user SET gold='+(gold+val)+' WHERE name=\''+usr+'\'';
-        conn.query(sql,
-            function(err, rows, fields) {
-                if (err) throw err;
-
-                next(null, {code: 200});
-                conn.end();
-            });
-    };
-
-    var SQLGetMoney = function()
-    {
-        var sql = 'SELECT * FROM user WHERE name=\''+usr+'\' AND password=\''+pwd+'\'';
-        conn.query(sql,
-            function(err, rows, fields) {
-                if (err) throw err;
-
-                if (rows.length==1){
-                    SQLAddMoney(rows[0]['gold']);
-                }else{
-                    next(null, {code: 500,msg: 'Register Failed��'});
-                    conn.end();
-                }
-            }
-        );
-    };
-
-    conn.connect(function(error, results) {
-        if(error) {
-            console.log('Connection Error: ' + error.message);
-            conn.end();
-            return;
-        }
-        console.log('Connected to MySQL');
-
-        SQLGetMoney();
-    });
+    mysql.pay(msg,next);
 
 };
 

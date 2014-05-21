@@ -38,10 +38,12 @@ app.configure('production|development', 'gate', function(){
 });
 
 app.configure('production|development', 'crossword', function(){
-    var GGameHall = require('./app/services/crossword/GGameHall');
     var GConfig = require('./app/services/utils/GConfig');
-    app.set('GGameHall',new GGameHall(app));
     app.set('GConfig',new GConfig(app));
+
+    var GGameHall = require('./app/services/crossword/GGameHall');
+    app.set('GGameHall',new GGameHall(app));
+
 });
 
 // start app

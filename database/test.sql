@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- 主机: localhost
--- 生成日期: 2014 年 05 月 19 日 22:09
+-- 生成日期: 2014 年 05 月 21 日 23:38
 -- 服务器版本: 5.1.73-community
 -- PHP 版本: 5.2.17
 
@@ -35,6 +35,27 @@ CREATE TABLE IF NOT EXISTS `achievement` (
 -- --------------------------------------------------------
 
 --
+-- 表的结构 `crossword`
+--
+
+CREATE TABLE IF NOT EXISTS `crossword` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `uid` bigint(20) NOT NULL,
+  `gold` bigint(20) NOT NULL DEFAULT '0',
+  `exp` bigint(20) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=2 ;
+
+--
+-- 转存表中的数据 `crossword`
+--
+
+INSERT INTO `crossword` (`id`, `uid`, `gold`, `exp`) VALUES
+(1, 1, 12, 0);
+
+-- --------------------------------------------------------
+
+--
 -- 表的结构 `user`
 --
 
@@ -42,8 +63,6 @@ CREATE TABLE IF NOT EXISTS `user` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `name` varchar(32) NOT NULL,
   `password` varchar(16) NOT NULL,
-  `exp` bigint(20) NOT NULL DEFAULT '0',
-  `gold` bigint(20) NOT NULL DEFAULT '0',
   `uuid` varchar(32) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name_UNIQUE` (`name`)
@@ -53,13 +72,13 @@ CREATE TABLE IF NOT EXISTS `user` (
 -- 转存表中的数据 `user`
 --
 
-INSERT INTO `user` (`id`, `name`, `password`, `exp`, `gold`, `uuid`) VALUES
-(1, 'user1', 'pwd', 0, 8, ''),
-(2, 'user2', 'pwd', 0, 0, ''),
-(3, 'Wilson', 'Champs-Elysees', 0, 0, ''),
-(4, 'user3', 'pwd', 0, 0, ''),
-(5, 'user4', 'pwd', 0, 0, ''),
-(6, 'user5', 'pwd', 0, 0, '');
+INSERT INTO `user` (`id`, `name`, `password`, `uuid`) VALUES
+(1, 'user1', 'pwd', ''),
+(2, 'user2', 'pwd', ''),
+(3, 'Wilson', 'Champs-Elysees', ''),
+(4, 'user3', 'pwd', ''),
+(5, 'user4', 'pwd', ''),
+(6, 'user5', 'pwd', '');
 
 -- --------------------------------------------------------
 

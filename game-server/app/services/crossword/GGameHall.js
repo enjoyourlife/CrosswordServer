@@ -3,6 +3,7 @@
  */
 
 var GUtils = require('../utils/GUtils');
+var GMySQL = require('../mysql/GMySQL');
 
 var GCODE = {
     ROOM: {
@@ -66,8 +67,19 @@ GUser.prototype.isWin = function(){
     return win;
 };
 
+GUser.prototype.setReward = function(){
+    var mysql = new GMySQL();
+
+    if (this.isWin()){
+        mysql.reward(this.uid,10,10,function(err,msg){});
+    }else{
+        mysql.reward(this.uid,5,5,function(err,msg){});
+    }
+
+};
+
     // Room State: OPEN READY GAME
-var GRoom = function(channel,xcid){
+var GRoom = function(app,channel,xcid){
     this.users = [];
     for (var i = 0 ; i < GCODE.ROOM.USER_SIZE ; ++ i){
         this.users.push(new GUser(i));
@@ -82,6 +94,7 @@ var GRoom = function(channel,xcid){
     this.usr_cnt = 0;
     this.time_cnt = 0;
     this.chess = null;
+    this.config = app.get('GConfig');
 };
 
 GRoom.prototype.isType = function(xcid){
@@ -270,9 +283,8 @@ GRoom.prototype.autoStart = function() {
     self.pushMessage(param);
 
     var fname = GUtils.genMapPath(this.xcid.level);
-//    console.log(fname);
     this.chess = GUtils.JsonFromFile('./data/'+fname+'.json');
-//    console.log(this.chess);
+
     var users = this.users;
     for (var i = 0 , len = users.length ; i < len ; ++ i){
         var user = users[i];
@@ -300,6 +312,10 @@ GRoom.prototype.autoStart = function() {
 };
 
 GRoom.prototype.stopGame = function() {
+
+    var users = this.users;
+    users[0].setReward();
+    users[1].setReward();
 
     var param = {
         route: 'onGameStop',
@@ -349,6 +365,7 @@ GRoom.prototype.doLogic = function() {
 
 var GGameHall = function(app) {
     this.app = app;
+
     this.rooms = {};
 };
 
@@ -393,7 +410,7 @@ GGameHall.prototype.getOpenRoom = function(xcid) {
         var cid = "channel"+room_cnt;
         var channelService = this.app.get('channelService');
         var channel = channelService.getChannel(cid, true);
-        room_open = rooms[cid] = new GRoom(channel,xcid);
+        room_open = rooms[cid] = new GRoom(this.app,channel,xcid);
     }
 
     return room_open;

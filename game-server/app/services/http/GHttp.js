@@ -126,7 +126,7 @@ var reqMessage = function(code,message ,request, response) {
 
 var reqRegister = function(msg,request, response) {
 
-    var conn = GMySQL();
+    var mysql = new GMySQL();
 
     var usr = msg.usr;
     var pwd = msg.pwd;
@@ -139,11 +139,11 @@ var reqRegister = function(msg,request, response) {
     var SQLInsertUser = function()
     {
         var sql = 'INSERT INTO user (name, password) VALUES (\''+usr+'\', \''+pwd+'\')';
-        conn.query(sql,
+        mysql.conn.query(sql,
             function(err, rows, fields) {
                 if (err) throw err;
 
-                conn.end();
+                mysql.conn.end();
                 reqMessage(200,{code:200,msg:'OK'},request,response);
             });
     };
@@ -151,12 +151,12 @@ var reqRegister = function(msg,request, response) {
     var SQLFindUser = function()
     {
         var sql = 'SELECT * FROM user WHERE name=\''+usr+'\' AND password=\''+pwd+'\'';
-        conn.query(sql,
+        mysql.conn.query(sql,
             function(err, rows, fields) {
                 if (err) throw err;
 
                 if (rows.length==1){
-                    conn.end();
+                    mysql.conn.end();
                     reqMessage(200,{code:500,msg:'Find Err'},request,response);
                 }else{
                     SQLInsertUser();
@@ -165,10 +165,10 @@ var reqRegister = function(msg,request, response) {
         );
     };
 
-    conn.connect(function(error, results) {
+    mysql.conn.connect(function(error, results) {
         if(error) {
             console.log('Connection Error: ' + error.message);
-            conn.end();
+            mysql.conn.end();
             reqMessage(200,{code:500,msg:'Conn Err'},request,response);
             return;
         }
