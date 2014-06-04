@@ -11,7 +11,7 @@ var Handler = function(app) {
 };
 
 // ---------------------------------------------------- //
-Handler.prototype.dologin = function(msg, session, next){
+Handler.prototype.dologin = function(uid, msg, session, next){
 
     var self = this;
 
@@ -20,13 +20,29 @@ Handler.prototype.dologin = function(msg, session, next){
     var rpc = self.app.rpc[gid];
     if (!!rpc){
 
-        var mid = GUtils.MD5(msg.usr);
-        console.log(mid);
-        session.bind(mid,null);
+        var uuid = GUtils.MD5(msg.usr);
+        console.log(uuid);
+
+        session.bind(uuid,null);
         session.on('closed', onUserLogout.bind(null, self.app));
 
         rpc.gameRemote.cfg(session,function(err,cfg){
-            next(null, {code: 200,uid: mid,config:cfg});
+
+            session.set('gid', gid);
+            session.push('gid', function(err) {
+                if(err) {
+                    console.error('set gid failed! error: %j', err.stack);
+                }
+            });
+
+            session.set('uid', uid);
+            session.push('uid', function(err) {
+                if(err) {
+                    console.error('set uid failed! error: %j', err.stack);
+                }
+            });
+
+            next(null, {code: 200,uuid:uuid,uid: uid,config:cfg});
         });
     }else{
         next(null, {code: 500,result: 0});
@@ -55,7 +71,7 @@ Handler.prototype.register = function(msg, session, next) {
             function(err, rows, fields) {
                 if (err) throw err;
 
-                self.dologin(msg,session,next);
+                self.login(msg,session,next);
 
                 mysql.conn.end();
             });
@@ -113,7 +129,8 @@ Handler.prototype.login = function(msg, session, next) {
 
                 if (rows.length==1){
 
-                    self.dologin(msg,session,next);
+                    var uid = rows[0]['id'];
+                    self.dologin(uid,msg,session,next);
 
                 }else{
                     next(null, {code: 500,msg: 'Login Failed��'});
@@ -156,7 +173,7 @@ var onUserLogout = function(app, session) {
 
 Handler.prototype.pay = function(msg, session, next) {
 
-    var mysql = new GMySQL();
+
 
     var usr = msg.usr;
     var pwd = msg.pwd;
@@ -165,6 +182,8 @@ Handler.prototype.pay = function(msg, session, next) {
         next(null, {code: 500});
         return;
     }
+
+    var mysql = new GMySQL();
 
     mysql.pay(msg,next);
 
@@ -186,31 +205,51 @@ Handler.prototype.list = function(msg, session, next) {
 
 };
 
+Handler.prototype.getinfo = function(msg, session, next) {
+    var uid = session.get('uid');
+    var gid = session.get('gid');
+
+    if (!uid || !gid){
+        next(null, {code: 500});
+        return;
+    }
+
+    console.log('uid:'+uid+ ' and gid:'+gid);
+
+    var mysql = new GMySQL();
+
+    mysql.info({uid:uid,gid:gid},next);
+};
+
 Handler.prototype.enter = function(msg, session, next) {
 
     var self = this;
 
-    var xuid = msg.uid;
-    var uid = msg.usr;
+    var uuid = msg.uuid;
+    var uid = 0;
+    var usr = msg.usr;
     var gid = msg.gid;  // 游戏ID，请传入crossword
     var xcid = msg.cid;  // 频道ID，自动匹配的不用传。
 
-    if (!xuid || !uid || !gid){
+    if (!uuid || !usr || !gid){
         next(null, {code: 500});
         return;
     }
 
     var sessionService = self.app.get('sessionService');
-/*
+
     // 如果不想检查登录，请注释掉这一段。
-    if( ! sessionService.getByUid(xuid)) {
+    var sessions_login = sessionService.getByUid(uuid);
+    if( !! sessions_login && sessions_login.length==1) {
+        uid = sessions_login[0].get('uid');
+    }else{
         next(null, {code: 500});
         return;
     }
-*/
+
     // 检查重复登录.
-    if( !! sessionService.getByUid(uid)) {
-        sessionService.kick(uid, 'kick', null);
+    if( !! sessionService.getByUid(usr)) {
+        sessionService.kick(usr, 'kick', null);
     }
 
     var rpc = self.app.rpc[gid];
@@ -219,6 +258,7 @@ Handler.prototype.enter = function(msg, session, next) {
         // do session config.
         session.bind(uid,null);
         session.on('closed', onUserLeave.bind(null, self.app));
+
 
         // add channel for session.
         rpc.gameRemote.add(session,
@@ -243,12 +283,20 @@ Handler.prototype.enter = function(msg, session, next) {
                         console.error('set gid failed! error: %j', err.stack);
                     }
                 });
+
+                session.set('uid', uid);
+                session.push('uid', function(err) {
+                    if(err) {
+                        console.error('set id failed! error: %j', err.stack);
+                    }
+                });
+
                 next(null, {code: 200,users: users});
             });
 
     }else{
         next(null, {code: 500});
-        sessionService.kick(uid, 'kick', null);
+        sessionService.kick(usr, 'kick', null);
     }
 
 };

@@ -19,8 +19,49 @@ var GMySQL = function() {
 
 module.exports = GMySQL;
 
+GMySQL.prototype.info = function(msg,next) {
+
+    var self = this;
+
+    var uid = msg.uid;
+    var gid = msg.gid;
+
+    var SQLGetInfo = function()
+    {
+        self.conn.query('SELECT * FROM '+gid+' WHERE id='+uid,
+            function(err, rows, fields) {
+                if (err) throw err;
+
+                if (rows.length==1){
+
+                    var info = rows[0];
+
+                    next(null, {code: 200,info:info});
+
+                }else{
+                    next(null, {code: 500,msg: 'Login Failed��'});
+                }
+
+                self.conn.end();
+            });
+    };
+
+    self.conn.connect(function(error, results) {
+        if(error) {
+            console.log('Connection Error: ' + error.message);
+            self.conn.end();
+            return;
+        }
+        console.log('Connected to MySQL');
+
+        SQLGetInfo();
+    });
+
+};
 
 GMySQL.prototype.pay = function(msg,next) {
+
+    var self = this;
 
     var usr = msg.usr;
     var pwd = msg.pwd;
@@ -35,12 +76,12 @@ GMySQL.prototype.pay = function(msg,next) {
             sql = 'UPDATE crossword SET gold='+(gold+val)+' WHERE uid='+uid;
         }
 
-        this.conn.query(sql,
+        self.conn.query(sql,
             function(err, rows, fields) {
                 if (err) throw err;
 
                 next(null, {code: 200});
-                this.conn.end();
+                self.conn.end();
             });
     };
 
@@ -56,7 +97,7 @@ GMySQL.prototype.pay = function(msg,next) {
     {
 //        var sql = 'SELECT * FROM user WHERE name=\''+usr+'\' AND password=\''+pwd+'\'';
         var sql = 'SELECT user.id, crossword.gold FROM user LEFT JOIN crossword ON user.id = crossword.uid WHERE user.name = \''+usr+'\' AND user.password = \''+pwd+'\' LIMIT 0 , 30';
-        this.conn.query(sql,
+        self.conn.query(sql,
             function(err, rows, fields) {
                 if (err) throw err;
 
@@ -64,16 +105,16 @@ GMySQL.prototype.pay = function(msg,next) {
                     SQLAddMoney(rows[0]['id'],rows[0]['gold']);
                 }else{
                     next(null, {code: 500,msg: 'Register Failed��'});
-                    this.conn.end();
+                    self.conn.end();
                 }
             }
         );
     };
 
-    this.conn.connect(function(error, results) {
+    self.conn.connect(function(error, results) {
         if(error) {
             console.log('Connection Error: ' + error.message);
-            this.conn.end();
+            self.conn.end();
             return;
         }
         console.log('Connected to MySQL');
@@ -85,15 +126,17 @@ GMySQL.prototype.pay = function(msg,next) {
 
 GMySQL.prototype.use = function(usr,val,next) {
 
+    var self = this;
+
     var SQLUseMoney = function(uid,gold)
     {
         var sql = 'UPDATE crossword SET gold='+(gold-val)+' WHERE uid=\''+uid+'\'';
-        this.conn.query(sql,
+        self.conn.query(sql,
             function(err, rows, fields) {
                 if (err) throw err;
 
                 next(null, {code: 200});
-                this.conn.end();
+                self.conn.end();
             });
     };
     /*
@@ -107,7 +150,7 @@ GMySQL.prototype.use = function(usr,val,next) {
     {
 
         var sql = 'SELECT user.id, crossword.gold FROM user LEFT JOIN crossword ON user.id = crossword.uid WHERE user.name=\''+usr+'\' LIMIT 0 , 30';
-        this.conn.query(sql,
+        self.conn.query(sql,
             function(err, rows, fields) {
                 if (err) throw err;
 
@@ -117,20 +160,20 @@ GMySQL.prototype.use = function(usr,val,next) {
                         SQLUseMoney(rows[0]['id'],gold);
                     }else{
                         next(null, {code: 500,msg: 'Register Failed��'});
-                        this.conn.end();
+                        self.conn.end();
                     }
                 }else{
                     next(null, {code: 500,msg: 'Register Failed��'});
-                    this.conn.end();
+                    self.conn.end();
                 }
             }
         );
     };
 
-    this.conn.connect(function(error, results) {
+    self.conn.connect(function(error, results) {
         if(error) {
             console.log('Connection Error: ' + error.message);
-            this.conn.end();
+            self.conn.end();
             return;
         }
         console.log('Connected to MySQL');
@@ -141,15 +184,17 @@ GMySQL.prototype.use = function(usr,val,next) {
 
 GMySQL.prototype.reward = function(usr,gold_val,exp_val,next) {
 
+    var self = this;
+
     var SQLSetReward = function(uid,gold,exp)
     {
         var sql = 'UPDATE crossword SET gold='+(gold+gold_val)+',exp='+(exp+exp_val)+' WHERE uid=\''+uid+'\'';
-        this.conn.query(sql,
+        self.conn.query(sql,
             function(err, rows, fields) {
                 if (err) throw err;
 
                 next(null, {code: 200});
-                this.conn.end();
+                self.conn.end();
             });
     };
     /*
@@ -163,7 +208,7 @@ GMySQL.prototype.reward = function(usr,gold_val,exp_val,next) {
     {
 
         var sql = 'SELECT user.id, crossword.gold, crossword.exp FROM user LEFT JOIN crossword ON user.id = crossword.uid WHERE user.name=\''+usr+'\' LIMIT 0 , 30';
-        this.conn.query(sql,
+        self.conn.query(sql,
             function(err, rows, fields) {
                 if (err) throw err;
 
@@ -172,11 +217,11 @@ GMySQL.prototype.reward = function(usr,gold_val,exp_val,next) {
                         SQLSetReward(rows[0]['id'],rows[0]['gold'],rows[0]['exp']);
                     }else{
                         next(null, {code: 500,msg: 'Register Failed��'});
-                        this.conn.end();
+                        self.conn.end();
                     }
                 }else{
                     next(null, {code: 500,msg: 'Register Failed��'});
-                    this.conn.end();
+                    self.conn.end();
                 }
             }
         );
@@ -185,7 +230,7 @@ GMySQL.prototype.reward = function(usr,gold_val,exp_val,next) {
     this.conn.connect(function(error, results) {
         if(error) {
             console.log('Connection Error: ' + error.message);
-            this.conn.end();
+            self.conn.end();
             return;
         }
         console.log('Connected to MySQL');

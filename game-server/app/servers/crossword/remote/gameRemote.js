@@ -30,6 +30,7 @@ GameRemote.prototype.add = function(uid, sid, cid, cb) {
 
     cb(null,room.cid,room.users);
 
+    console.log('end ... GameRemote.prototype.add');
 };
 
 GameRemote.prototype.kick = function(uid, sid, cid , cb) {
