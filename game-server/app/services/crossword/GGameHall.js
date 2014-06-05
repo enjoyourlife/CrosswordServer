@@ -92,10 +92,6 @@ GUser.prototype.setChess = function(pos){
 
 };
 
-GUser.prototype.getChess = function(){
-    return this.chess;
-};
-
 GUser.prototype.isWin = function(){
     if (this.uid == null){
         return false;
@@ -115,7 +111,7 @@ GUser.prototype.isWin = function(){
 
 GUser.prototype.setReward = function(config){
 
-    var mysql = new GMySQL();
+
 
     var cfg = config.getById(0,'rewards');
 
@@ -133,7 +129,10 @@ GUser.prototype.setReward = function(config){
 
     console.log("gold:"+gold+" exp:"+exp);
 
-    mysql.reward(this.uid,gold,exp,function(err,msg){});
+    if (!!this.uid){
+        var mysql = new GMySQL();
+        mysql.reward(this.uid,gold,exp,function(err,msg){});
+    }
 
 };
 
@@ -183,9 +182,9 @@ GRoom.prototype.chat = function(uid,content){
 
 GRoom.prototype.addUser = function(uid,sid){
 
-    console.log('addUser ...'+uid);
+//    console.log('addUser ...'+uid);
     this.channel.add(uid,sid);
-    console.log('getMembers ...'+this.channel.getMembers());
+//    console.log('getMembers ...'+this.channel.getMembers());
 
     var users = this.users;
     for (var i = 0 , len = users.length ; i < len ; ++ i){
@@ -226,9 +225,9 @@ GRoom.prototype.delUser = function(uid,sid){
     };
     this.pushMessage(param);
 
-    console.log('delUser ...'+uid);
+//    console.log('delUser ...'+uid);
     this.channel.leave(uid,sid);
-    console.log('getMembers ...'+this.channel.getMembers());
+//    console.log('getMembers ...'+this.channel.getMembers());
 
 
     if (this.getUserCount()>0){
@@ -264,7 +263,7 @@ GRoom.prototype.getUsers = function(is_chess){
         var usr = users[i];
         if (is_chess){
             sdata.push({idx:usr.idx,uid:usr.uid,
-                rewards:usr.rewards,chess:usr.getChess()});
+                rewards:usr.rewards,chess:usr.chess,flag:usr.flags});
         }else{
             sdata.push({idx:usr.idx,uid:usr.uid});
         }

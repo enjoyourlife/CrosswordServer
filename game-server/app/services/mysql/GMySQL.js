@@ -184,11 +184,19 @@ GMySQL.prototype.use = function(uid,val,next) {
 
 GMySQL.prototype.reward = function(uid,gold_val,exp_val,next) {
 
+
+
     var self = this;
 
-    var SQLSetReward = function(gold,exp)
+    var SQLSetReward = function(gold,exp,insert)
     {
-        var sql = 'UPDATE crossword SET gold='+(gold+gold_val)+',exp='+(exp+exp_val)+' WHERE uid=\''+uid+'\'';
+        var sql;
+        if (insert){
+            sql = 'INSERT INTO crossword (uid,gold,exp) VALUES ('+uid+','+gold_val+','+exp_val+')';
+        }else{
+            sql = 'UPDATE crossword SET gold='+(gold+gold_val)+',exp='+(exp+exp_val)+' WHERE uid='+uid;
+        }
+
         self.conn.query(sql,
             function(err, rows, fields) {
                 if (err) throw err;
@@ -213,15 +221,9 @@ GMySQL.prototype.reward = function(uid,gold_val,exp_val,next) {
                 if (err) throw err;
 
                 if (rows.length==1){
-                    if (!!rows[0]['gold']){
-                        SQLSetReward(rows[0]['gold'],rows[0]['exp']);
-                    }else{
-                        next(null, {code: 500,msg: 'Register Failed��'});
-                        self.conn.end();
-                    }
+                    SQLSetReward(rows[0]['gold'],rows[0]['exp'],false);
                 }else{
-                    next(null, {code: 500,msg: 'Register Failed��'});
-                    self.conn.end();
+                    SQLSetReward(0,0,true);
                 }
             }
         );
