@@ -20,8 +20,12 @@ GConfig.prototype.getById = function(id,section,key) {
     var cfg = this.getCfg(section);
     for (var i = 0 ; i < cfg.length ; ++ i){
         var item = cfg[i];
-        if (!!item && item[key]){
-            ret = item[key];
+        if (!!item && item.id==id){
+            if (!!key){
+                ret = item[key];
+            }else{
+                ret = item;
+            }
             break;
         }
     }

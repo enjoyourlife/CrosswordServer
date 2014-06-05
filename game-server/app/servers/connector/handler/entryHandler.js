@@ -173,8 +173,6 @@ var onUserLogout = function(app, session) {
 
 Handler.prototype.pay = function(msg, session, next) {
 
-
-
     var usr = msg.usr;
     var pwd = msg.pwd;
     var val = msg.val;
@@ -206,7 +204,8 @@ Handler.prototype.list = function(msg, session, next) {
 };
 
 Handler.prototype.getinfo = function(msg, session, next) {
-    var uid = session.get('uid');
+
+    var uid = msg.uid;
     var gid = session.get('gid');
 
     if (!uid || !gid){
@@ -258,7 +257,6 @@ Handler.prototype.enter = function(msg, session, next) {
         // do session config.
         session.bind(uid,null);
         session.on('closed', onUserLeave.bind(null, self.app));
-
 
         // add channel for session.
         rpc.gameRemote.add(session,

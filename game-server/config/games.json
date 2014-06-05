@@ -2,20 +2,22 @@
   "crossword":{
       "items":[{"id":0,"name":"test","price":2},
             {"id":1,"name":"demo","price":5}],
+
       "levels":[{"level":1, "experience":0, "name":"A"},
             {"level":2, "experience":15, "name":"B"},
             {"level":3, "experience":25, "name":"C"}],
 
-      "exps":[{"level":0, "coin":10, "exp":5, "coinbase":20, "expbase":15},
-        {"level":1, "coin":15, "exp":10, "coinbase":25, "expbase":20},
-        {"level":2, "coin":20, "exp":15, "coinbase":30, "expbase":25}],
-      "rewards":[{"level":0, "wincoin":100, "winexp":50 },
-          {"level":1, "wincoin":150, "winexp":100 },
-          {"level":2, "wincoin":200, "winexp":150}],
+
+      "rewards": [
+          {"id":0, "passsilver":20, "passexp":20, "everysilver":1, "everyexp":1, "specialsilver":10, "specialexp":15},
+          {"id":1, "passsilver":25, "passexp":25, "everysilver":2, "everyexp":2, "specialsilver":10, "specialexp":15},
+          {"id":2, "passsilver":30, "passexp":30, "everysilver":3, "everyexp":3, "specialsilver":10, "specialexp":15}
+      ],
 
       "robot":[{"robotlevel":0, "time":300, "num":10, "easyprob":0.7, "normalprob":0, "hardprob":0 },
             {"robotlevel":1, "time":300, "num":15, "easyprob":0.2, "normalprob":0.8, "hardprob":0 },
             {"robotlevel":2, "time":300, "num":20, "easyprob":0.1, "normalprob":0.2, "hardprob":1 }]
+
 
   }
 

@@ -28,7 +28,7 @@ GMySQL.prototype.info = function(msg,next) {
 
     var SQLGetInfo = function()
     {
-        self.conn.query('SELECT * FROM '+gid+' WHERE id='+uid,
+        self.conn.query('SELECT * FROM '+gid+' WHERE uid='+uid,
             function(err, rows, fields) {
                 if (err) throw err;
 
@@ -96,13 +96,13 @@ GMySQL.prototype.pay = function(msg,next) {
     var SQLGetMoney = function()
     {
 //        var sql = 'SELECT * FROM user WHERE name=\''+usr+'\' AND password=\''+pwd+'\'';
-        var sql = 'SELECT user.id, crossword.gold FROM user LEFT JOIN crossword ON user.id = crossword.uid WHERE user.name = \''+usr+'\' AND user.password = \''+pwd+'\' LIMIT 0 , 30';
+        var sql = 'SELECT crossword.uid, crossword.gold FROM user LEFT JOIN crossword ON user.id = crossword.uid WHERE user.name = \''+usr+'\' AND user.password = \''+pwd+'\' LIMIT 0 , 30';
         self.conn.query(sql,
             function(err, rows, fields) {
                 if (err) throw err;
 
                 if (rows.length==1){
-                    SQLAddMoney(rows[0]['id'],rows[0]['gold']);
+                    SQLAddMoney(rows[0]['uid'],rows[0]['gold']);
                 }else{
                     next(null, {code: 500,msg: 'Register Failed��'});
                     self.conn.end();
@@ -124,11 +124,11 @@ GMySQL.prototype.pay = function(msg,next) {
 
 };
 
-GMySQL.prototype.use = function(usr,val,next) {
+GMySQL.prototype.use = function(uid,val,next) {
 
     var self = this;
 
-    var SQLUseMoney = function(uid,gold)
+    var SQLUseMoney = function(gold)
     {
         var sql = 'UPDATE crossword SET gold='+(gold-val)+' WHERE uid=\''+uid+'\'';
         self.conn.query(sql,
@@ -149,7 +149,7 @@ GMySQL.prototype.use = function(usr,val,next) {
     var SQLGetMoney = function()
     {
 
-        var sql = 'SELECT user.id, crossword.gold FROM user LEFT JOIN crossword ON user.id = crossword.uid WHERE user.name=\''+usr+'\' LIMIT 0 , 30';
+        var sql = 'SELECT gold FROM crossword WHERE uid='+uid;
         self.conn.query(sql,
             function(err, rows, fields) {
                 if (err) throw err;
@@ -157,7 +157,7 @@ GMySQL.prototype.use = function(usr,val,next) {
                 if (rows.length==1){
                     var gold = rows[0]['gold'];
                     if (gold >= val){
-                        SQLUseMoney(rows[0]['id'],gold);
+                        SQLUseMoney(gold);
                     }else{
                         next(null, {code: 500,msg: 'Register Failed��'});
                         self.conn.end();
@@ -182,11 +182,11 @@ GMySQL.prototype.use = function(usr,val,next) {
     });
 };
 
-GMySQL.prototype.reward = function(usr,gold_val,exp_val,next) {
+GMySQL.prototype.reward = function(uid,gold_val,exp_val,next) {
 
     var self = this;
 
-    var SQLSetReward = function(uid,gold,exp)
+    var SQLSetReward = function(gold,exp)
     {
         var sql = 'UPDATE crossword SET gold='+(gold+gold_val)+',exp='+(exp+exp_val)+' WHERE uid=\''+uid+'\'';
         self.conn.query(sql,
@@ -207,14 +207,14 @@ GMySQL.prototype.reward = function(usr,gold_val,exp_val,next) {
     var SQLGetReward = function()
     {
 
-        var sql = 'SELECT user.id, crossword.gold, crossword.exp FROM user LEFT JOIN crossword ON user.id = crossword.uid WHERE user.name=\''+usr+'\' LIMIT 0 , 30';
+        var sql = 'SELECT gold,exp FROM crossword WHERE uid='+uid;
         self.conn.query(sql,
             function(err, rows, fields) {
                 if (err) throw err;
 
                 if (rows.length==1){
                     if (!!rows[0]['gold']){
-                        SQLSetReward(rows[0]['id'],rows[0]['gold'],rows[0]['exp']);
+                        SQLSetReward(rows[0]['gold'],rows[0]['exp']);
                     }else{
                         next(null, {code: 500,msg: 'Register Failed��'});
                         self.conn.end();

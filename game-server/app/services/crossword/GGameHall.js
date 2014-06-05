@@ -18,35 +18,78 @@ var GCODE = {
 var GUser = function(idx){
     this.idx = idx;
     this.uid = null;
+
     this.chess = null;
+    this.flags = null;
+
+    this.rewards = {pass:0,every:0,special:0};
+    this.info = null;
+};
+
+GUser.prototype.init = function(uid){
+
+    this.uid = uid;
+
+//    var self = this;
+//    var mysql = new GMySQL();
+//    mysql.info({uid:uid,gid:'crossword'},function(err,msg){
+//        if (!!msg && msg.code==200){
+//            self.info = msg.info;
+//            console.log(self.info);
+//        }
+//    });
 };
 
 GUser.prototype.initChess = function(chess){
     this.chess = [];
+    this.flags = [];
     var words = chess['words'];
     if (!!words){
         for (var i = 0 ; i < words.length ; ++ i){
             this.chess.push(0);
+            this.flags.push(words[i].flag);
         }
     }
 };
 
 GUser.prototype.setChessByPos = function(pos){
     if (pos >= 0 && pos < this.chess.length){
-        this.chess[pos] = 1;
+        if (this.chess[pos]==0){
+            this.chess[pos] = 1;
+            return true;
+        }
     }
+    return false;
 };
 
 GUser.prototype.setChess = function(pos){
+
     if (pos instanceof Array){
         var posx;
         for (var i = 0 ; i < pos.length ; ++ i) {
             posx = pos[i];
-            this.setChessByPos(posx);
+            if (this.setChessByPos(posx)){
+
+                if (this.flags[posx]==1){
+                    this.rewards.special ++;
+                }else{
+                    this.rewards.every ++;
+                }
+
+            }
         }
     }else{
-        this.setChessByPos(pos);
+        if (this.setChessByPos(pos)){
+
+            if (this.flags[pos]==1){
+                this.rewards.special ++;
+            }else{
+                this.rewards.every ++;
+            }
+
+        }
     }
+
 };
 
 GUser.prototype.getChess = function(){
@@ -64,17 +107,29 @@ GUser.prototype.isWin = function(){
             win = false;
         }
     }
+
+    this.rewards.pass = win?1:0.2;
+
     return win;
 };
 
-GUser.prototype.setReward = function(){
+GUser.prototype.setReward = function(config){
+
     var mysql = new GMySQL();
 
-    if (this.isWin()){
-        mysql.reward(this.uid,10,10,function(err,msg){});
-    }else{
-        mysql.reward(this.uid,5,5,function(err,msg){});
-    }
+    var cfg = config.getById(0,'rewards');
+
+    var gold = 0;
+    gold += this.rewards.pass * cfg['passsilver'];
+    gold += this.rewards.every * cfg['everysilver'];
+    gold += this.rewards.special * cfg['specialsilver'];
+
+    var exp = 0;
+    exp += this.rewards.pass * cfg['passexp'];
+    exp += this.rewards.every * cfg['everyexp'];
+    exp += this.rewards.special * cfg['specialexp'];
+
+    mysql.reward(this.uid,gold,exp,function(err,msg){});
 
 };
 
@@ -128,7 +183,7 @@ GRoom.prototype.addUser = function(uid,sid){
     for (var i = 0 , len = users.length ; i < len ; ++ i){
         var user = users[i];
         if (!user.uid){
-            user.uid = uid;
+            user.init(uid);
             this.usr_cnt ++;
             break;
         }
@@ -197,7 +252,8 @@ GRoom.prototype.getUsers = function(is_chess){
     for (var i = 0 , len = users.length ; i < len ; ++ i){
         var usr = users[i];
         if (is_chess){
-            sdata.push({idx:usr.idx,uid:usr.uid,chess:usr.getChess()});
+            sdata.push({idx:usr.idx,uid:usr.uid,
+                rewards:usr.rewards,chess:usr.getChess()});
         }else{
             sdata.push({idx:usr.idx,uid:usr.uid});
         }
@@ -285,6 +341,14 @@ GRoom.prototype.autoStart = function() {
     var fname = GUtils.genMapPath(this.xcid.level);
     this.chess = GUtils.JsonFromFile('./data/'+fname+'.json');
 
+    // rand chess flag ...
+    var words = this.chess['words'];
+    for (var i = 0 , len = words.length ; i < len ; ++ i){
+        words[i].flag = 0;
+    }
+    words[0].flag = 1;
+    // end
+
     var users = this.users;
     for (var i = 0 , len = users.length ; i < len ; ++ i){
         var user = users[i];
@@ -314,8 +378,8 @@ GRoom.prototype.autoStart = function() {
 GRoom.prototype.stopGame = function() {
 
     var users = this.users;
-    users[0].setReward();
-    users[1].setReward();
+    users[0].setReward(this.config);
+    users[1].setReward(this.config);
 
     var param = {
         route: 'onGameStop',
