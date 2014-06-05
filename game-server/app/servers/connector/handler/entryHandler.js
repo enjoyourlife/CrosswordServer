@@ -10,6 +10,9 @@ var Handler = function(app) {
   this.app = app;
 };
 
+Handler.prototype.entry = function(msg, session, next) {
+    next(null, {code: 200, msg: 'game server is ok.'});
+};
 // ---------------------------------------------------- //
 Handler.prototype.dologin = function(uid, msg, session, next){
 

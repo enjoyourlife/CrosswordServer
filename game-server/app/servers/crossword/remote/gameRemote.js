@@ -47,6 +47,8 @@ GameRemote.prototype.kick = function(uid, sid, cid , cb) {
     room.delUser(uid,sid);
 
     cb(null);
+
+    console.log('end GameRemote.prototype.kick ...');
 };
 
 GameRemote.prototype.cfg = function(cb) {

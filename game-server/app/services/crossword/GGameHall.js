@@ -129,6 +129,10 @@ GUser.prototype.setReward = function(config){
     exp += this.rewards.every * cfg['everyexp'];
     exp += this.rewards.special * cfg['specialexp'];
 
+    console.log(cfg);
+
+    console.log("gold:"+gold+" exp:"+exp);
+
     mysql.reward(this.uid,gold,exp,function(err,msg){});
 
 };
@@ -178,7 +182,11 @@ GRoom.prototype.chat = function(uid,content){
 };
 
 GRoom.prototype.addUser = function(uid,sid){
+
+    console.log('addUser ...'+uid);
     this.channel.add(uid,sid);
+    console.log('getMembers ...'+this.channel.getMembers());
+
     var users = this.users;
     for (var i = 0 , len = users.length ; i < len ; ++ i){
         var user = users[i];
@@ -218,7 +226,10 @@ GRoom.prototype.delUser = function(uid,sid){
     };
     this.pushMessage(param);
 
+    console.log('delUser ...'+uid);
     this.channel.leave(uid,sid);
+    console.log('getMembers ...'+this.channel.getMembers());
+
 
     if (this.getUserCount()>0){
         this.stopGame();

@@ -104,11 +104,7 @@
       }
       
       function sitdownA() {
-          pomelo.init({
-              host: host,
-              port: port,
-              log: true
-          }, function() {
+
             pomelo.request("connector.entryHandler.enter", {
                         sit: 0,
                         gid: 'crossword',
@@ -118,16 +114,12 @@
                 }, function(data) {
                 console.log(data);
               });
-          });
+
       
       }
 
       function sitdownB() {
-          pomelo.init({
-              host: host,
-              port: port,
-              log: true
-          }, function() {
+
               pomelo.request("connector.entryHandler.enter", {
                   sit: 0,
                   gid: 'crossword',
@@ -137,7 +129,7 @@
               }, function(data) {
                   console.log(data);
               });
-          });
+
 
       }
       
