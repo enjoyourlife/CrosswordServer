@@ -26,6 +26,11 @@ Handler.prototype.dologin = function(uid, msg, session, next){
         var uuid = GUtils.MD5(msg.usr);
         console.log(uuid);
 
+        var sessionService = self.app.get('sessionService');
+        if( !! sessionService.getByUid(uuid)) {
+            sessionService.kick(uuid, 'kick', null);
+        }
+
         session.bind(uuid,null);
         session.on('closed', onUserLogout.bind(null, self.app));
 
@@ -250,8 +255,8 @@ Handler.prototype.enter = function(msg, session, next) {
     }
 
     // 检查重复登录.
-    if( !! sessionService.getByUid(usr)) {
-        sessionService.kick(usr, 'kick', null);
+    if( !! sessionService.getByUid(uid)) {
+        sessionService.kick(uid, 'kick', null);
     }
 
     var rpc = self.app.rpc[gid];

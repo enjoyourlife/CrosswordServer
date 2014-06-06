@@ -3,9 +3,9 @@
       "items":[{"id":0,"name":"test","price":2},
             {"id":1,"name":"demo","price":5}],
 
-      "levels":[{"level":1, "experience":0, "name":"A"},
-            {"level":2, "experience":15, "name":"B"},
-            {"level":3, "experience":25, "name":"C"}],
+      "levels":[{"id":0, "size":0},
+            {"id":1, "size":15},
+            {"id":2, "size":25}],
 
 
       "rewards": [

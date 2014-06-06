@@ -17,18 +17,20 @@ var GCODE = {
 
 var GUser = function(idx){
     this.idx = idx;
-    this.uid = null;
+
+    this.init(null);
+
+};
+
+GUser.prototype.init = function(uid){
+
+    this.uid = uid;
 
     this.chess = null;
     this.flags = null;
 
     this.rewards = {pass:0,every:0,special:0};
     this.info = null;
-};
-
-GUser.prototype.init = function(uid){
-
-    this.uid = uid;
 
 //    var self = this;
 //    var mysql = new GMySQL();
@@ -38,6 +40,16 @@ GUser.prototype.init = function(uid){
 //            console.log(self.info);
 //        }
 //    });
+};
+
+GUser.prototype.fini = function(){
+    this.uid = null;
+
+    this.chess = null;
+    this.flags = null;
+
+    this.rewards = {pass:0,every:0,special:0};
+    this.info = null;
 };
 
 GUser.prototype.initChess = function(chess){
@@ -53,13 +65,21 @@ GUser.prototype.initChess = function(chess){
 };
 
 GUser.prototype.setChessByPos = function(pos){
+    var ret = false;
     if (pos >= 0 && pos < this.chess.length){
         if (this.chess[pos]==0){
             this.chess[pos] = 1;
-            return true;
+            ret = true;
         }
     }
-    return false;
+    if (ret){
+        if (this.flags[pos]==1){
+            this.rewards.special ++;
+        }else{
+            this.rewards.every ++;
+        }
+    }
+    return ret;
 };
 
 GUser.prototype.setChess = function(pos){
@@ -70,22 +90,10 @@ GUser.prototype.setChess = function(pos){
             posx = pos[i];
             if (this.setChessByPos(posx)){
 
-                if (this.flags[posx]==1){
-                    this.rewards.special ++;
-                }else{
-                    this.rewards.every ++;
-                }
-
             }
         }
     }else{
         if (this.setChessByPos(pos)){
-
-            if (this.flags[pos]==1){
-                this.rewards.special ++;
-            }else{
-                this.rewards.every ++;
-            }
 
         }
     }
@@ -109,8 +117,9 @@ GUser.prototype.isWin = function(){
     return win;
 };
 
-GUser.prototype.getReward = function(config){
-    var cfg = config.getById(0,'rewards');
+GUser.prototype.getReward = function(cfg){
+
+//    var cfg = config.getById(0,'rewards');
 
     var gold = 0;
     gold += this.rewards.pass * cfg['passsilver'];
@@ -126,27 +135,29 @@ GUser.prototype.getReward = function(config){
     return result;
 };
 
-GUser.prototype.setReward = function(config){
+GUser.prototype.setReward = function(cfg){
 
-    var cfg = config.getById(0,'rewards');
+//    var cfg = config.getById(0,'rewards');
 
-    var gold = 0;
-    gold += this.rewards.pass * cfg['passsilver'];
-    gold += this.rewards.every * cfg['everysilver'];
-    gold += this.rewards.special * cfg['specialsilver'];
+//    var gold = 0;
+//    gold += this.rewards.pass * cfg['passsilver'];
+//    gold += this.rewards.every * cfg['everysilver'];
+//    gold += this.rewards.special * cfg['specialsilver'];
+//
+//    var exp = 0;
+//    exp += this.rewards.pass * cfg['passexp'];
+//    exp += this.rewards.every * cfg['everyexp'];
+//    exp += this.rewards.special * cfg['specialexp'];
 
-    var exp = 0;
-    exp += this.rewards.pass * cfg['passexp'];
-    exp += this.rewards.every * cfg['everyexp'];
-    exp += this.rewards.special * cfg['specialexp'];
+//    console.log(cfg);
 
-    console.log(cfg);
+//    console.log("gold:"+gold+" exp:"+exp);
 
-    console.log("gold:"+gold+" exp:"+exp);
+    var val = this.getReward(cfg);
 
     if (!!this.uid){
         var mysql = new GMySQL();
-        mysql.reward(this.uid,gold,exp,function(err,msg){});
+        mysql.reward(this.uid,val.gold,val.exp,function(err,msg){});
     }
 
 };
@@ -228,7 +239,7 @@ GRoom.prototype.delUser = function(uid,sid){
 
     var user = this.getUser(uid);
     if (!!user){
-        user.uid = null;
+        user.fini();
         this.usr_cnt --;
     }
 
@@ -277,8 +288,9 @@ GRoom.prototype.getUsers = function(is_chess){
     for (var i = 0 , len = users.length ; i < len ; ++ i){
         var usr = users[i];
         if (is_chess){
+            var cfg =  this.config.getById(this.xcid.level,'rewards');
             sdata.push({idx:usr.idx,uid:usr.uid,
-                rewards:usr.getReward(this.config),
+                rewards:usr.getReward(cfg),
                 chess:usr.chess,flags:usr.flags});
         }else{
             sdata.push({idx:usr.idx,uid:usr.uid});
@@ -292,21 +304,8 @@ GRoom.prototype.setUser = function(uid,key,val){
         return;
     }
 
-    if (this.xcid.type!=1){
+    if (this.xcid.type==1){
 
-        var users = this.users;
-
-        users[0].setChess(val);
-        users[1].setChess(val);
-
-        var param = {
-            route: 'onGameProc',
-            users: this.getUsers(true)
-        };
-
-        this.pushMessage(param);
-
-    }else{
         var user = this.getUser(uid);
         if (!!user){
 
@@ -319,6 +318,19 @@ GRoom.prototype.setUser = function(uid,key,val){
 
             this.pushMessage(param);
         }
+
+    }else{
+        var users = this.users;
+
+        users[0].setChess(val);
+        users[1].setChess(val);
+
+        var param = {
+            route: 'onGameProc',
+            users: this.getUsers(true)
+        };
+
+        this.pushMessage(param);
     }
 
 
@@ -364,7 +376,8 @@ GRoom.prototype.autoStart = function() {
     };
     self.pushMessage(param);
 
-    var fname = GUtils.genMapPath(this.xcid.level);
+    var size = this.config.getById(this.xcid.level,'levels','size');
+    var fname = GUtils.genMapPath(size);
     this.chess = GUtils.JsonFromFile('./data/'+fname+'.json');
 
     // rand chess flag ...
@@ -372,7 +385,8 @@ GRoom.prototype.autoStart = function() {
     for (var i = 0 , len = words.length ; i < len ; ++ i){
         words[i].flag = 0;
     }
-    words[0].flag = 1;
+    var rand = GUtils.randInt(0,words.length-1);
+    words[rand].flag = 1;
     // end
 
     var users = this.users;
@@ -404,8 +418,10 @@ GRoom.prototype.autoStart = function() {
 GRoom.prototype.stopGame = function() {
 
     var users = this.users;
-    users[0].setReward(this.config);
-    users[1].setReward(this.config);
+    var cfg =  this.config.getById(this.xcid.level,'rewards');
+
+    users[0].setReward(cfg);
+    users[1].setReward(cfg);
 
     var param = {
         route: 'onGameStop',
