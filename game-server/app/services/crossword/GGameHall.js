@@ -104,14 +104,29 @@ GUser.prototype.isWin = function(){
         }
     }
 
-    this.rewards.pass = win?1:0.2;
+    this.rewards.pass = win?1:0;
 
     return win;
 };
 
+GUser.prototype.getReward = function(config){
+    var cfg = config.getById(0,'rewards');
+
+    var gold = 0;
+    gold += this.rewards.pass * cfg['passsilver'];
+    gold += this.rewards.every * cfg['everysilver'];
+    gold += this.rewards.special * cfg['specialsilver'];
+
+    var exp = 0;
+    exp += this.rewards.pass * cfg['passexp'];
+    exp += this.rewards.every * cfg['everyexp'];
+    exp += this.rewards.special * cfg['specialexp'];
+
+    var result = {gold:gold,exp:exp};
+    return result;
+};
+
 GUser.prototype.setReward = function(config){
-
-
 
     var cfg = config.getById(0,'rewards');
 
@@ -263,7 +278,8 @@ GRoom.prototype.getUsers = function(is_chess){
         var usr = users[i];
         if (is_chess){
             sdata.push({idx:usr.idx,uid:usr.uid,
-                rewards:usr.rewards,chess:usr.chess,flag:usr.flags});
+                rewards:usr.getReward(this.config),
+                chess:usr.chess,flags:usr.flags});
         }else{
             sdata.push({idx:usr.idx,uid:usr.uid});
         }

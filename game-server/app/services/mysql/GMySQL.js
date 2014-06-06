@@ -26,6 +26,8 @@ GMySQL.prototype.info = function(msg,next) {
     var uid = msg.uid;
     var gid = msg.gid;
 
+    console.log("uid:"+uid+" gid:"+gid);
+
     var SQLGetInfo = function()
     {
         self.conn.query('SELECT * FROM '+gid+' WHERE uid='+uid,
@@ -39,7 +41,8 @@ GMySQL.prototype.info = function(msg,next) {
                     next(null, {code: 200,info:info});
 
                 }else{
-                    next(null, {code: 500,msg: 'Login Failed��'});
+
+                    next(null, {code: 200});
                 }
 
                 self.conn.end();
