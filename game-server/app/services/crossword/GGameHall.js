@@ -257,7 +257,7 @@ GRoom.prototype.delUser = function(uid,sid){
 
 
     if (this.getUserCount()>0){
-        this.stopGame();
+        this.stopGame(2);
     }
 
     // 这是小型房间的设定。
@@ -349,7 +349,8 @@ GRoom.prototype.startTime = function() {
         function(){
 
             if (self.time_cnt >= self.xcid.time/5){
-                self.stopGame();
+                console.log('auto stop for time up.');
+                self.stopGame(1);
             }else{
                 self.time_cnt ++;
                 var param = {
@@ -415,7 +416,7 @@ GRoom.prototype.autoStart = function() {
 
 };
 
-GRoom.prototype.stopGame = function() {
+GRoom.prototype.stopGame = function(flag) {
 
     var users = this.users;
     var cfg =  this.config.getById(this.xcid.level,'rewards');
@@ -425,6 +426,7 @@ GRoom.prototype.stopGame = function() {
 
     var param = {
         route: 'onGameStop',
+        flag: flag,
         users:this.getUsers(true)
     };
     this.pushMessage(param);
@@ -465,7 +467,8 @@ GRoom.prototype.doLogic = function() {
     var usrB = users[1];
 
     if (usrA.isWin() || usrB.isWin()){
-        this.stopGame();
+        console.log('auto stop for one win.');
+        this.stopGame(0);
     }
 };
 

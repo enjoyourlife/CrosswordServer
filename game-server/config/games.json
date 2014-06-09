@@ -1,4 +1,13 @@
 {
+    "public":{
+        "errors":[
+            {"id":1000,"message":"none error."},
+            {"id":1001,"message":""},
+            {"id":1002,"message":""},
+            {"id":1003,"message":""}
+        ]
+    },
+
   "crossword":{
       "items":[{"id":0,"name":"test","price":2},
             {"id":1,"name":"demo","price":5}],
@@ -6,6 +15,7 @@
       "levels":[{"id":0, "size":10},
             {"id":1, "size":15},
             {"id":2, "size":20}],
+
 
 
       "rewards": [

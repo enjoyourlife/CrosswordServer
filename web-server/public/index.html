@@ -52,18 +52,13 @@
           log: true
         }, function() {
         pomelo.request("connector.entryHandler.entry", "hello pomelo", function(data) {
-            alert(data.msg);
+            console.log(data);
           });
         });
       }
       
       function loginA() {
-      
-        pomelo.init({
-          host: host,
-          port: port,
-          log: true
-        }, function() {
+
         pomelo.request("connector.entryHandler.login", {
 					usr: 'user1',
 					pwd: 'pwd',
@@ -71,17 +66,11 @@
 				}, function(data) {
             console.log(data);
           });
-        });      
-      
+
       }
       
       function loginB() {
-      
-        pomelo.init({
-          host: host,
-          port: port,
-          log: true
-        }, function() {
+
         pomelo.request("connector.entryHandler.login", {
 					usr: 'user2',
 					pwd: 'pwd',
@@ -89,16 +78,14 @@
 				}, function(data) {
             console.log(data);
           });
-        });      
-      
+
       }      
       
       function logout() {
       
         pomelo.request("connector.entryHandler.logout", {
-					tag: 0
 			}, function(data) {
-
+            console.log(data);
           });
       
       }
@@ -139,7 +126,7 @@
         			sit: 1,
         			level: 0
 			}, function(data) {
-//            console.log(data);
+            console.log(data);
           });
       
       }

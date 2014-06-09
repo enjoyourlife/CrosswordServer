@@ -4,11 +4,16 @@
 
 var fs = require('fs');
 
-var GConfig = function(app) {
+var GConfig = function(app,section) {
 //    console.log(app);
     var data = fs.readFileSync('./config/games.json');
     var result = JSON.parse(data);
-    this.config = result[app.serverType];
+    if (!!section){
+        this.config = result[section];
+    }else{
+        this.config = result[app.serverType];
+    }
+
 };
 
 GConfig.prototype.getCfg = function(key) {

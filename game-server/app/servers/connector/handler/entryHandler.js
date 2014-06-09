@@ -1,6 +1,6 @@
 var GMySQL = require('../../../services/mysql/GMySQL');
 var GUtils = require('../../../services/utils/GUtils');
-
+var GError = require('../../../services/utils/GError');
 
 module.exports = function(app) {
   return new Handler(app);
@@ -11,8 +11,9 @@ var Handler = function(app) {
 };
 
 Handler.prototype.entry = function(msg, session, next) {
-    next(null, {code: 200, msg: 'game server is ok.'});
+    next(null, {code: 200, err: GError.New(this.app,1000)});
 };
+
 // ---------------------------------------------------- //
 Handler.prototype.dologin = function(uid, msg, session, next){
 
@@ -50,6 +51,13 @@ Handler.prototype.dologin = function(uid, msg, session, next){
                 }
             });
 
+            session.set('typ', 'hall');
+            session.push('typ', function(err) {
+                if(err) {
+                    console.error('set typ failed! error: %j', err.stack);
+                }
+            });
+
             next(null, {code: 200,uuid:uuid,uid: uid,config:cfg});
         });
     }else{
@@ -59,6 +67,11 @@ Handler.prototype.dologin = function(uid, msg, session, next){
 };
 
 Handler.prototype.register = function(msg, session, next) {
+
+    if (!!session.uid){
+        next(null, {code: 500,result: 0});
+        return;
+    }
 
     var mysql = new GMySQL();
 
@@ -117,6 +130,11 @@ Handler.prototype.register = function(msg, session, next) {
 
 Handler.prototype.login = function(msg, session, next) {
 
+    if (!!session.uid){
+        next(null, {code: 500,result: 0});
+        return;
+    }
+
     var self = this;
 
     var mysql = new GMySQL();
@@ -162,12 +180,19 @@ Handler.prototype.login = function(msg, session, next) {
 
 Handler.prototype.logout = function(msg, session, next) {
 
-    var self = this;
-    var sessionService = self.app.get('sessionService');
+    if (!!session.uid && session.get('typ')=='hall'){
 
-    next(null, {code: 200, msg: 'logout OK.'});
+        var self = this;
+        var sessionService = self.app.get('sessionService');
 
-    sessionService.kick(session.uid, 'kick', null);
+        next(null, {code: 200, msg: 'logout OK.'});
+
+        sessionService.kick(session.uid, 'kick', null);
+
+    }else{
+        next(null, {code: 500,result: 0});
+    }
+
 };
 
 var onUserLogout = function(app, session) {
@@ -177,7 +202,6 @@ var onUserLogout = function(app, session) {
     }
 
 };
-
 
 Handler.prototype.pay = function(msg, session, next) {
 
@@ -230,6 +254,11 @@ Handler.prototype.getinfo = function(msg, session, next) {
 
 Handler.prototype.enter = function(msg, session, next) {
 
+    if (!!session.uid && session.get('typ')!='game'){
+        next(null, {code: 500});
+        return;
+    }
+
     var self = this;
 
     var uuid = msg.uuid;
@@ -254,17 +283,29 @@ Handler.prototype.enter = function(msg, session, next) {
         return;
     }
 
+    // 游戏不会检查重复登录...
+    /*
     // 检查重复登录.
     if( !! sessionService.getByUid(uid)) {
         sessionService.kick(uid, 'kick', null);
     }
+    */
 
     var rpc = self.app.rpc[gid];
 
     if (!!rpc){
-        // do session config.
-        session.bind(uid,null);
-        session.on('closed', onUserLeave.bind(null, self.app));
+        var is_new = (!!session.uid)?false:true;
+        if (is_new) {
+            // do session config.
+            session.bind(uid,null);
+            session.on('closed', onUserLeave.bind(null, self.app));
+        }
+
+        // 已经坐下了，将不能再次坐下。
+        if (!!session.get('cid')){
+            next(null, {code: 500});
+            return;
+        }
 
         // add channel for session.
         rpc.gameRemote.add(session,
@@ -275,25 +316,35 @@ Handler.prototype.enter = function(msg, session, next) {
                     next(null, {code: 500});
                     return;
                 }
-                // set session settings.
+
+                if (is_new) {
+                    // set session settings.
+                    session.set('gid', gid);
+                    session.push('gid', function(err) {
+                        if(err) {
+                            console.error('set gid failed! error: %j', err.stack);
+                        }
+                    });
+
+                    session.set('uid', uid);
+                    session.push('uid', function(err) {
+                        if(err) {
+                            console.error('set id failed! error: %j', err.stack);
+                        }
+                    });
+
+                    session.set('typ', 'game');
+                    session.push('typ', function(err) {
+                        if(err) {
+                            console.error('set typ failed! error: %j', err.stack);
+                        }
+                    });
+                }
+
                 session.set('cid', cid);
                 session.push('cid', function(err) {
                     if(err) {
                         console.error('set cid failed! error: %j', err.stack);
-                    }
-                });
-
-                session.set('gid', gid);
-                session.push('gid', function(err) {
-                    if(err) {
-                        console.error('set gid failed! error: %j', err.stack);
-                    }
-                });
-
-                session.set('uid', uid);
-                session.push('uid', function(err) {
-                    if(err) {
-                        console.error('set id failed! error: %j', err.stack);
                     }
                 });
 
@@ -309,6 +360,11 @@ Handler.prototype.enter = function(msg, session, next) {
 
 Handler.prototype.exit = function(msg, session, next) {
 
+    if (!!session.uid && session.get('typ')!='game'){
+        next(null, {code: 500});
+        return;
+    }
+
     if (!session.uid || !session.get('gid')){
         next(null, {code: 500});
         return;
@@ -319,7 +375,16 @@ Handler.prototype.exit = function(msg, session, next) {
     if (!!rpc){
         rpc.gameRemote.kick(session,
             session.uid, self.app.get('serverId'), session.get('cid'),
-            function(err){});
+            function(err){
+
+                session.set('cid', null);
+                session.push('cid', function(err) {
+                    if(err) {
+                        console.error('set cid failed! error: %j', err.stack);
+                    }
+                });
+
+            });
     }
 
     next(null, {code: 200});
@@ -335,7 +400,16 @@ var onUserLeave = function(app, session) {
     if (!!rpc){
         rpc.gameRemote.kick(session,
             session.uid, app.get('serverId'), session.get('cid'),
-            function(err){});
+            function(err){
+
+                session.set('cid', null);
+                session.push('cid', function(err) {
+                    if(err) {
+                        console.error('set cid failed! error: %j', err.stack);
+                    }
+                });
+
+            });
     }
 
 };

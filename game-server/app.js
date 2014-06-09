@@ -1,10 +1,13 @@
 var pomelo = require('pomelo');
 
+var GConfig = require('./app/services/utils/GConfig');
+
 /**
  * Init app for client.
  */
 var app = pomelo.createApp();
 app.set('name', 'CrosswordServer');
+app.set('public',new GConfig(app,'public'));
 
 // app configuration
 app.configure('production|development', 'master', function(){
@@ -38,7 +41,7 @@ app.configure('production|development', 'gate', function(){
 });
 
 app.configure('production|development', 'crossword', function(){
-    var GConfig = require('./app/services/utils/GConfig');
+
     app.set('GConfig',new GConfig(app));
 
     var GGameHall = require('./app/services/crossword/GGameHall');
