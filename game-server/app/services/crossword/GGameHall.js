@@ -255,7 +255,6 @@ GRoom.prototype.delUser = function(uid,sid){
     this.channel.leave(uid,sid);
 //    console.log('getMembers ...'+this.channel.getMembers());
 
-
     if (this.getUserCount()>0){
         this.stopGame(2);
     }
@@ -332,8 +331,6 @@ GRoom.prototype.setUser = function(uid,key,val){
 
         this.pushMessage(param);
     }
-
-
 
     this.doLogic();
 };
@@ -486,6 +483,16 @@ GGameHall.prototype.getRoomById = function(cid) {
 };
 
 GGameHall.prototype.getOpenRoom = function(xcid) {
+
+    if (!xcid){
+        return null;
+    }
+    if (xcid.type < 1 || xcid.type > 2){
+        return null;
+    }
+    if (xcid.level < 0 || xcid.level > 2){
+        return null;
+    }
 
     var rooms = this.rooms;
     var room_cnt = 0;

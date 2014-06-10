@@ -396,18 +396,20 @@ var onUserLeave = function(app, session) {
         return;
     }
 
+//    console.log(session);
+
     var rpc = app.rpc[session.get('gid')];
     if (!!rpc){
         rpc.gameRemote.kick(session,
             session.uid, app.get('serverId'), session.get('cid'),
             function(err){
 
-                session.set('cid', null);
-                session.push('cid', function(err) {
-                    if(err) {
-                        console.error('set cid failed! error: %j', err.stack);
-                    }
-                });
+//                session.set('cid', null);
+//                session.push('cid', function(err) {
+//                    if(err) {
+//                        console.error('set cid failed! error: %j', err.stack);
+//                    }
+//                });
 
             });
     }
