@@ -263,11 +263,11 @@ Handler.prototype.enter = function(msg, session, next) {
 
     var uuid = msg.uuid;
     var uid = 0;
-    var usr = msg.usr;
+//    var usr = msg.usr;
     var gid = msg.gid;  // 游戏ID，请传入crossword
     var xcid = msg.cid;  // 频道ID，自动匹配的不用传。
 
-    if (!uuid || !usr || !gid){
+    if (!uuid || !gid){
         next(null, {code: 500});
         return;
     }
@@ -275,25 +275,28 @@ Handler.prototype.enter = function(msg, session, next) {
     var sessionService = self.app.get('sessionService');
 
     // 如果不想检查登录，请注释掉这一段。
-    var sessions_login = sessionService.getByUid(uuid);
-    if( !! sessions_login && sessions_login.length==1) {
-        uid = sessions_login[0].get('uid');
+    if (gid=='escape'){
+        uid = msg.uuid;
     }else{
-        next(null, {code: 500});
-        return;
+        var sessions_login = sessionService.getByUid(uuid);
+        if( !! sessions_login && sessions_login.length==1) {
+            uid = sessions_login[0].get('uid');
+        }else{
+            next(null, {code: 500});
+            return;
+        }
     }
-
-    // 游戏不会检查重复登录...
-    /*
-    // 检查重复登录.
-    if( !! sessionService.getByUid(uid)) {
-        sessionService.kick(uid, 'kick', null);
-    }
-    */
 
     var rpc = self.app.rpc[gid];
 
     if (!!rpc){
+
+        // 游戏不会检查重复登录...
+        // 检查重复登录.
+        if(session.uid==null && !! sessionService.getByUid(uid)) {
+            sessionService.kick(uid, 'kick', null);
+        }
+
         var is_new = (!!session.uid)?false:true;
         if (is_new) {
             // do session config.
@@ -353,7 +356,7 @@ Handler.prototype.enter = function(msg, session, next) {
 
     }else{
         next(null, {code: 500});
-        sessionService.kick(usr, 'kick', null);
+//        sessionService.kick(usr, 'kick', null);
     }
 
 };

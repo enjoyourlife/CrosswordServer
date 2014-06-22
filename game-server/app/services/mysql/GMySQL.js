@@ -243,3 +243,45 @@ GMySQL.prototype.reward = function(uid,gold_val,exp_val,next) {
         SQLGetReward();
     });
 };
+
+GMySQL.prototype.getWords = function(next) {
+
+    var self = this;
+    var words = [];
+
+    var SQLGetWords = function()
+    {
+
+        var sql = 'SELECT * FROM word WHERE id >= (SELECT floor(RAND() * (SELECT MAX(id) FROM word))) LIMIT 64';
+        self.conn.query(sql,
+            function(err, rows, fields) {
+                if (err) throw err;
+
+                if (rows.length>0){
+
+                    for (var i = 0 ; i < rows.length ; ++ i){
+                        var name = encodeURI(rows[i]['caption']);
+                        var tips = encodeURI(rows[i]['rem']);
+                        var word = {id:i,name:name,tips:tips};
+                        words.push(word);
+                    }
+
+                    next(null,words);
+                }
+            }
+        );
+    };
+
+    this.conn.connect(function(error, results) {
+        if(error) {
+            console.log('Connection Error: ' + error.message);
+            self.conn.end();
+            return;
+        }
+        console.log('Connected to MySQL');
+
+        SQLGetWords();
+    });
+
+
+};

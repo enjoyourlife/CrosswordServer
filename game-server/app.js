@@ -49,6 +49,15 @@ app.configure('production|development', 'crossword', function(){
 
 });
 
+app.configure('production|development', 'escape', function(){
+
+    app.set('GConfig',new GConfig(app));
+
+    var GGameHall = require('./app/services/escape/GGameHall');
+    app.set('GGameHall',new GGameHall(app));
+
+});
+
 // start app
 app.start();
 

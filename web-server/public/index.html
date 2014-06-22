@@ -93,11 +93,10 @@
       function sitdownA() {
 
             pomelo.request("connector.entryHandler.enter", {
-                        sit: 0,
                         gid: 'crossword',
                         uuid: '24c9e15e52afc47c225b757e7bee1f9d',
                         usr: 'user1',
-                        cid: {type:1,level:1}
+                        cid: {type:3,level:1}
                 }, function(data) {
                 console.log(data);
               });
@@ -108,11 +107,10 @@
       function sitdownB() {
 
               pomelo.request("connector.entryHandler.enter", {
-                  sit: 0,
                   gid: 'crossword',
                   uuid: '7e58d63b60197ceb55a1c487989a3720',
                   usr: 'user2',
-                  cid: {type:1,level:1}
+                  cid: {type:3,level:1}
               }, function(data) {
                   console.log(data);
               });
@@ -134,7 +132,7 @@
       function getInfo() {
 
           pomelo.request("connector.entryHandler.getinfo", {
-                uid: 1
+                uid: 2
           }, function(data) {
               console.log(data);
           });
@@ -166,11 +164,7 @@
       function send() {
       
         pomelo.request("crossword.gameHandler.send", {
-				rid: 'pwd',
-				content: 'message',
-				from: 'name',
-				target: '*',
-                val: 2
+                val: 1
 			}, function(data) {
             console.log(data);
           });
@@ -224,7 +218,12 @@
 //		tip('offline', user);
 //		removeUser(user);
 	});
-	
+
+      pomelo.on('onGameRound', function(data) {
+          console.log('onGameRound ... ');
+          console.log(data);
+      });
+
 	pomelo.on('onGameStop', function(data) {
 		console.log('onGameStop ... ');
         console.log(data);

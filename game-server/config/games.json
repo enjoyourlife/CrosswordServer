@@ -29,6 +29,10 @@
             {"robotlevel":2, "time":300, "num":20, "easyprob":0.1, "normalprob":0.2, "hardprob":1 }]
 
 
-  }
+  },
+
+    "escape":{
+
+    }
 
 }
