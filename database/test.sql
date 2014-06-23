@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- 主机: localhost
--- 生成日期: 2014 年 05 月 21 日 23:38
+-- 生成日期: 2014 年 06 月 23 日 20:11
 -- 服务器版本: 5.1.73-community
 -- PHP 版本: 5.2.17
 
@@ -44,14 +44,15 @@ CREATE TABLE IF NOT EXISTS `crossword` (
   `gold` bigint(20) NOT NULL DEFAULT '0',
   `exp` bigint(20) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=2 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=4 ;
 
 --
 -- 转存表中的数据 `crossword`
 --
 
 INSERT INTO `crossword` (`id`, `uid`, `gold`, `exp`) VALUES
-(1, 1, 12, 0);
+(1, 1, 42, 22),
+(3, 2, 0, 0);
 
 -- --------------------------------------------------------
 
@@ -62,6 +63,7 @@ INSERT INTO `crossword` (`id`, `uid`, `gold`, `exp`) VALUES
 CREATE TABLE IF NOT EXISTS `user` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `name` varchar(32) NOT NULL,
+  `nick` varchar(32) NOT NULL DEFAULT '游客',
   `password` varchar(16) NOT NULL,
   `uuid` varchar(32) NOT NULL,
   PRIMARY KEY (`id`),
@@ -72,13 +74,13 @@ CREATE TABLE IF NOT EXISTS `user` (
 -- 转存表中的数据 `user`
 --
 
-INSERT INTO `user` (`id`, `name`, `password`, `uuid`) VALUES
-(1, 'user1', 'pwd', ''),
-(2, 'user2', 'pwd', ''),
-(3, 'Wilson', 'Champs-Elysees', ''),
-(4, 'user3', 'pwd', ''),
-(5, 'user4', 'pwd', ''),
-(6, 'user5', 'pwd', '');
+INSERT INTO `user` (`id`, `name`, `nick`, `password`, `uuid`) VALUES
+(1, 'user1', '游客', 'pwd', ''),
+(2, 'user2', '游客', 'pwd', ''),
+(3, 'Wilson', '游客', 'Champs-Elysees', ''),
+(4, 'user3', '游客', 'pwd', ''),
+(5, 'user4', '游客', 'pwd', ''),
+(6, 'user5', '游客', 'pwd', '');
 
 -- --------------------------------------------------------
 

@@ -30,7 +30,7 @@ GMySQL.prototype.info = function(msg,next) {
 
     var SQLGetInfo = function()
     {
-        self.conn.query('SELECT * FROM '+gid+' WHERE uid='+uid,
+        self.conn.query('SELECT '+gid+'.*,user.nick, user.name FROM '+gid+' INNER JOIN user ON user.id = '+gid+'.uid WHERE uid='+uid,
             function(err, rows, fields) {
                 if (err) throw err;
 
