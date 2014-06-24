@@ -36,7 +36,7 @@ GUser.prototype.init = function(uid){
     this.chess = null;
     this.flags = null;
 
-    this.rewards = {pass:0,every:0,special:0};
+    this.rewards = {pass:0,every:0,special:0,specialexp:0};
     this.info = null;
     this.blood = 0;
 
@@ -56,7 +56,7 @@ GUser.prototype.fini = function(){
     this.chess = null;
     this.flags = null;
 
-    this.rewards = {pass:0,every:0,special:0};
+    this.rewards = {pass:0,every:0,special:0,specialexp:0};
     this.info = null;
     this.blood = 0;
 };
@@ -75,19 +75,25 @@ GUser.prototype.initChess = function(chess){
 
 GUser.prototype.setChessByPos = function(pos){
     var ret = false;
-    if (pos >= 0 && pos < this.chess.length){
-        if (this.chess[pos]==0){
-            this.chess[pos] = 1;
-            ret = true;
+
+    if (this.chess!=null){
+        if (pos >= 0 && pos < this.chess.length){
+            if (this.chess[pos]==0){
+                this.chess[pos] = 1;
+                ret = true;
+            }
+        }
+        if (ret){
+            if (this.flags[pos]==1) {
+                this.rewards.special++;
+            }if (this.flags[pos]==2){
+                this.rewards.specialexp++;
+            }else{
+                this.rewards.every ++;
+            }
         }
     }
-    if (ret){
-        if (this.flags[pos]==1){
-            this.rewards.special ++;
-        }else{
-            this.rewards.every ++;
-        }
-    }
+
     return ret;
 };
 
@@ -138,7 +144,13 @@ GUser.prototype.getReward = function(cfg){
     var exp = 0;
     exp += this.rewards.pass * cfg['passexp'];
     exp += this.rewards.every * cfg['everyexp'];
-    exp += this.rewards.special * cfg['specialexp'];
+    exp += this.rewards.specialexp * cfg['specialexp'];
+
+//    if (GUtils.randInt(1,100)>50){
+//        gold += this.rewards.special * cfg['specialsilver'];
+//    }else{
+//        exp += this.rewards.special * cfg['specialexp'];
+//    }
 
     var result = {gold:gold,exp:exp};
     return result;
@@ -264,8 +276,14 @@ GRoom.prototype.delUser = function(uid,sid){
     this.channel.leave(uid,sid);
 //    console.log('getMembers ...'+this.channel.getMembers());
 
-    if (this.getUserCount()>0){
-        this.stopGame(2);
+    if (this.xcid.type==2){
+        if (this.getUserCount()==0){
+            this.stopGame(2);
+        }
+    }else{
+        if (this.getUserCount()>0){
+            this.stopGame(2);
+        }
     }
 
     // 这是小型房间的设定。
@@ -328,6 +346,21 @@ GRoom.prototype.setUser = function(uid,key,val){
         }
 
     }else{
+
+        var user = this.getUser(uid);
+        if (!!user){
+
+            user.setChess(val);
+
+            var param = {
+                route: 'onGameProc',
+                users: this.getUsers(true)
+            };
+
+            this.pushMessage(param);
+        }
+
+        /*
         var users = this.users;
 
         users[0].setChess(val);
@@ -339,6 +372,7 @@ GRoom.prototype.setUser = function(uid,key,val){
         };
 
         this.pushMessage(param);
+        */
     }
 
     this.doLogic();
@@ -394,7 +428,7 @@ GRoom.prototype.autoStart = function() {
         words[i].flag = 0;
     }
     var rand = GUtils.randInt(0,words.length-1);
-    words[rand].flag = 1;
+    words[rand].flag = (GUtils.randInt(0,100)>50)?1:2;
     // end
 
     var users = this.users;
@@ -473,10 +507,41 @@ GRoom.prototype.doLogic = function() {
     var usrA = users[0];
     var usrB = users[1];
 
-    if (usrA.isWin() || usrB.isWin()){
-        console.log('auto stop for one win.');
-        this.stopGame(0);
+    if (this.xcid.type == 2){
+
+        var usr = (usrA.uid!=null)?usrA:usrB;
+
+        if (usr==null){
+            this.stopGame(3);
+        }
+
+        var win = true;
+        for (var i = 0 ; i < usr.chess.length ; ++ i){
+            var isA =  (usrA!=null) && usrA.chess[i] == 0;
+            var isB =  (usrB!=null) && usrB.chess[i] == 0;
+            if (isA && isB){
+                win = false;
+            }
+        }
+
+        if (usrA!=null && win){
+            usrA.rewards.pass = win?1:0;
+        }
+        if (usrB!=null && win){
+            usrB.rewards.pass = win?1:0;
+        }
+        if (win){
+            this.stopGame(0);
+        }
+
+    }else{
+        if (usrA.isWin() || usrB.isWin()){
+            console.log('auto stop for one win.');
+            this.stopGame(0);
+        }
     }
+
+
 };
 
 // -----------------------------------------------------
