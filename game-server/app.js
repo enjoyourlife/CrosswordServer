@@ -58,6 +58,15 @@ app.configure('production|development', 'escape', function(){
 
 });
 
+app.configure('production|development', 'killer', function(){
+
+    app.set('GConfig',new GConfig(app));
+
+    var GGameHall = require('./app/services/killer/GGameHall');
+    app.set('GGameHall',new GGameHall(app));
+
+});
+
 // start app
 app.start();
 

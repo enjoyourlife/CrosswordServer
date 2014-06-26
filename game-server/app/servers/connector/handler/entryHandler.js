@@ -275,7 +275,7 @@ Handler.prototype.enter = function(msg, session, next) {
     var sessionService = self.app.get('sessionService');
 
     // 如果不想检查登录，请注释掉这一段。
-    if (gid=='escape'){
+    if (gid=='escape' || gid=='killer'){
         uid = msg.uuid;
     }else{
         var sessions_login = sessionService.getByUid(uuid);

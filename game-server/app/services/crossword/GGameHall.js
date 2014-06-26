@@ -385,14 +385,15 @@ GRoom.prototype.pushMessage = function(route, msg, opts, cb) {
 GRoom.prototype.startTime = function() {
     var self = this;
     this.time_cnt = 0;
+    var time_tab = 50;
     this.iid = setInterval(
         function(){
 
-            if (self.time_cnt >= self.xcid.time/5){
+            if (self.time_cnt >= self.xcid.time){
                 console.log('auto stop for time up.');
                 self.stopGame(1);
             }else{
-                self.time_cnt ++;
+                self.time_cnt += time_tab;
                 var param = {
                     route: 'onGameTime',
                     time:   self.time_cnt
@@ -400,7 +401,7 @@ GRoom.prototype.startTime = function() {
                 self.pushMessage(param);
             }
 
-        },50000);
+        },time_tab*1000);
 };
 
 GRoom.prototype.autoStart = function() {

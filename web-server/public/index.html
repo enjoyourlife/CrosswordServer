@@ -117,7 +117,29 @@
 
 
       }
-      
+
+      function sitdownR(uid) {
+
+          pomelo.request("connector.entryHandler.enter", {
+              gid: 'killer',
+              uuid:uid,
+              cid:'C0'
+          }, function(data) {
+              console.log(data);
+          });
+
+
+      }
+
+      function ready() {
+
+          pomelo.request("killer.gameHandler.ready", {ready:true}, function(data) {
+              console.log(data);
+//              alert(data.msg);
+          });
+
+      }
+
       function situp() {
       
         pomelo.request("connector.entryHandler.exit", {
@@ -169,6 +191,23 @@
             console.log(data);
           });
       
+      }
+
+      function cursor(tid) {
+
+          pomelo.request("killer.gameHandler.cursor", {tid:tid}, function(data) {
+              console.log(data);
+          });
+
+      }
+
+      function rooms() {
+
+          pomelo.request("connector.entryHandler.list", {gid:'killer'}, function(data) {
+              console.log(data);
+//              alert(data.msg);
+          });
+
       }
       
     console.log('js log ... ');
@@ -284,6 +323,12 @@
         <input id="test" type="button" value="Sitdown B Game Server" onclick="sitdownB()"/>
     </div>
         <div class="g-button">
+            <input id="test" type="button" value="Sitdown R Game Server" onclick="sitdownR(Math.random())"/>
+        </div>
+        <div class="g-button">
+            <input id="B2" type="button" value="Ready Game Server" onclick="ready()"/>
+        </div>
+        <div class="g-button">
         <input id="test" type="button" value="Situp Game Server" onclick="situp()"/>
       </div>     
       <div class="g-button">
@@ -299,6 +344,17 @@
 
         <div class="g-button">
             <input id="test" type="button" value="Use Game Server" onclick="use()"/>
+        </div>
+        <div class="g-button">
+            <input id="C1" type="button" value="1" onclick="cursor(0)"/>
+            <input id="C2" type="button" value="2" onclick="cursor(1)"/>
+            <input id="C3" type="button" value="3" onclick="cursor(2)"/>
+            <input id="C4" type="button" value="4" onclick="cursor(3)"/>
+            <input id="C5" type="button" value="5" onclick="cursor(4)"/>
+            <input id="C6" type="button" value="6" onclick="cursor(5)"/>
+        </div>
+        <div class="g-button">
+            <input id="F1" type="button" value="List Game Server" onclick="rooms()"/>
         </div>
 
     </div>
