@@ -192,7 +192,7 @@ var GRoom = function(app,channel,xcid){
     this.channel = channel;
     this.cid = channel.name;
     this.xcid = xcid;
-    this.xcid.time = 300;
+
     this.door = GCODE.ROOM.G_ROOM_OPEN;
     this.tid = null;
     this.iid = null;
@@ -200,6 +200,8 @@ var GRoom = function(app,channel,xcid){
     this.time_cnt = 0;
     this.chess = null;
     this.config = app.get('GConfig');
+
+    this.xcid.time = this.config.getById(this.xcid.level,'levels','time');
 };
 
 GRoom.prototype.isType = function(xcid){
@@ -385,15 +387,18 @@ GRoom.prototype.pushMessage = function(route, msg, opts, cb) {
 GRoom.prototype.startTime = function() {
     var self = this;
     this.time_cnt = 0;
-    var time_tab = 50;
+    var time_tab = 60;
     this.iid = setInterval(
         function(){
 
+            console.log("setInterval:"+self.time_cnt+","+self.xcid.time);
+
+            self.time_cnt += time_tab;
             if (self.time_cnt >= self.xcid.time){
                 console.log('auto stop for time up.');
                 self.stopGame(1);
             }else{
-                self.time_cnt += time_tab;
+
                 var param = {
                     route: 'onGameTime',
                     time:   self.time_cnt
