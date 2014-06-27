@@ -53,8 +53,8 @@ GUser.prototype.init = function(uid){
 GUser.prototype.fini = function(){
     this.uid = null;
 
-    this.chess = null;
-    this.flags = null;
+//    this.chess = null;
+//    this.flags = null;
 
     this.rewards = {pass:0,every:0,special:0,specialexp:0};
     this.info = null;
