@@ -38,6 +38,7 @@ var c_nRole_V1 = [
 var GUser = function(idx){
     this.idx = idx;
     this.uid=null;
+    this.ins=null;
     this.tid=null;
     this.dat=null;
     this.ready=false;
@@ -70,6 +71,8 @@ var GRoom = function(cid){
     this.tid = null;
     this.usr_cnt = 0;
     this.groups = {};
+
+    this.randRoles();
 };
 
 GRoom.prototype.instance = function(app){
@@ -297,6 +300,41 @@ GRoom.prototype.setReady = function(uid,ready) {
     }
 
 //    console.log(this.users);
+};
+
+GRoom.prototype.randRoles = function() {
+    var users = this.users;
+    var ins = [];
+    var rnd = [];
+    for (var i = 0,len = 32 ; i < len ; ++ i)
+    {
+        ins[i] = i;
+        rnd[i] = Math.random();
+    }
+
+    for (var i = 0 ; i < 16 ; ++ i)
+    {
+        for (var j = 0 ; j < i ; ++ j)
+        {
+            if (rnd[i] > rnd[j])
+            {
+                var rd = rnd[i];
+                rnd[i] = rnd[j];
+                rnd[j] = rd;
+
+                var is = ins[i];
+                ins[i] = ins[j];
+                ins[j] = is;
+            }
+        }
+    }
+
+    for (var i = 0,len = users.length ; i < len ; ++ i)
+    {
+        var usr = users[i];
+        usr.ins = ins[i];
+    }
+
 };
 
 GRoom.prototype.randRTypes = function() {
@@ -530,6 +568,7 @@ GRoom.prototype.startGame = function() {
 
     var self = this;
     self.door = GCODE.ROOM.G_ROOM_GAME;
+
     self.randRTypes();
 
     self.pushMessageByUids('onGameStart',

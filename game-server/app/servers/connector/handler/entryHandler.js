@@ -15,7 +15,7 @@ Handler.prototype.entry = function(msg, session, next) {
 };
 
 // ---------------------------------------------------- //
-Handler.prototype.dologin = function(uid, msg, session, next){
+Handler.prototype.dologin = function(uid, info, msg, session, next){
 
     var self = this;
 
@@ -58,7 +58,7 @@ Handler.prototype.dologin = function(uid, msg, session, next){
                 }
             });
 
-            next(null, {code: 200,uuid:uuid,uid: uid,config:cfg});
+            next(null, {code: 200,uuid:uuid,uid: uid,config:cfg,info:info});
         });
     }else{
         next(null, {code: 500,result: 0});
@@ -141,22 +141,28 @@ Handler.prototype.login = function(msg, session, next) {
 
     var usr = msg.usr;
     var pwd = msg.pwd;
+    var gid = msg.gid;
 
-    if (!usr || !pwd){
+    if (!usr || !pwd || !gid){
         next(null, {code: 500});
         return;
     }
 
     var SQLLoginUser = function()
     {
-        mysql.conn.query('SELECT * FROM user WHERE name=\''+usr+'\' AND password=\''+pwd+'\'',
+        mysql.conn.query('SELECT * FROM user LEFT JOIN '+gid+' ON user.id='+gid+'.uid WHERE name=\''+usr+'\' AND password=\''+pwd+'\' LIMIT 0,30',
             function(err, rows, fields) {
                 if (err) throw err;
 
                 if (rows.length==1){
 
-                    var uid = rows[0]['id'];
-                    self.dologin(uid,msg,session,next);
+                    var uid = rows[0]['uid'];
+                    var info = rows[0];
+
+                    delete info.id;
+                    delete info.password;
+
+                    self.dologin(uid,info,msg,session,next);
 
                 }else{
                     next(null, {code: 500,msg: 'Login Failed��'});
