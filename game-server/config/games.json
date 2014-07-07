@@ -12,7 +12,11 @@
 
 
       "items":[{"id":0,"name":"test","price":2},
-            {"id":1,"name":"demo","price":5}],
+            {"id":1,"name":"demo","price":5},
+            {"id":2,"name":"demo2","price":4},
+            {"id":3,"name":"demo3","price":3},
+            {"id":4,"name":"demo4","price":2},
+            {"id":5,"name":"demo5","price":1}],
 
       "levels":[{"id":0, "size":10, "time":120},
             {"id":1, "size":15, "time":180},

@@ -48,9 +48,9 @@ Handler.prototype.cursor = function(msg, session, next) {
     var uid = session.uid;
 
     var room = this.gameHall.getRoomById(cid);
-    room.setCursor(uid,tid);
+    var result = room.setCursor(uid,tid);
 
-    next(null, {code:200});
+    next(null, {code:200,result:result});
 
 };
 
@@ -65,9 +65,10 @@ Handler.prototype.ready = function(msg, session, next) {
     var uid = session.uid;
 
     var room = this.gameHall.getRoomById(cid);
-    room.setReady(uid,ready);
 
-    next(null, {code:200});
+    var result = room.setReady(uid,ready);
+
+    next(null, {code:200,result:result});
 };
 
 Handler.prototype.chat = function(msg, session, next) {

@@ -37,6 +37,21 @@ var c_nRole_V1 = [
 
 var GUser = function(idx){
     this.idx = idx;
+    this.reset();
+};
+
+GUser.prototype.init = function(uid){
+    this.reset();
+
+    this.uid = uid;
+    this.dat = {};
+};
+
+GUser.prototype.fini = function(){
+    this.reset();
+};
+
+GUser.prototype.reset = function(){
     this.uid=null;
     this.ins=null;
     this.tid=null;
@@ -46,16 +61,6 @@ var GUser = function(idx){
     this.enable=true;
     this.rand=0.0;
     this.rtype=GCODE.RTYPE.ROLE_ALL;
-};
-
-GUser.prototype.init = function(uid){
-    this.uid = uid;
-    this.dat = {};
-};
-
-GUser.prototype.fini = function(){
-    this.uid = null;
-    this.dat = null;
 };
 
 // Room State: OPEN READY GAME
@@ -115,7 +120,7 @@ GRoom.prototype.masterUser = function(){
 
 };
 
-GRoom.prototype.addUser = function(uid,sid){
+GRoom.prototype.addUser = function(uid,sid,cb){
     this.channel.add(uid,sid);
     var users = this.users;
     var user_get;
@@ -131,6 +136,8 @@ GRoom.prototype.addUser = function(uid,sid){
 
     this.masterUser();
 
+    cb(null,this.cid,this.users,user_get);
+
     var param = {
         route: 'onUserEnter',
         users: users,
@@ -139,21 +146,14 @@ GRoom.prototype.addUser = function(uid,sid){
     };
     this.pushMessage(param);
 
-//    if (this.getUserCount()>=GCODE.ROOM.USER_SIZE){
-//        this.state = GCODE.ROOM.G_ROOM_READY;
-//    }
+    if (this.getUserCount()>=GCODE.ROOM.USER_MAX){
+        this.door = GCODE.ROOM.G_ROOM_FULL;
+    }
 
     return user_get;
 };
 
 GRoom.prototype.delUser = function(uid,sid){
-
-    var param = {
-        route: 'onUserExit',
-        uid: uid,
-        channel:this.cid
-    };
-    this.pushMessage(param);
 
     this.channel.leave(uid,sid);
     var user = this.getUser(uid);
@@ -165,14 +165,19 @@ GRoom.prototype.delUser = function(uid,sid){
 
     this.masterUser();
 
-//    if (this.getUserCount()>0){
-//        this.stopGame();
-//    }
+    var users = this.users;
+    var param = {
+        route: 'onUserExit',
+        users: users,
+        uid: uid,
+        channel:this.cid
+    };
+    this.pushMessage(param);
 
     // 这是小型房间的设定。
-//    if (this.getUserCount()==0){
-//        this.state = GCODE.ROOM.G_ROOM_OPEN;
-//    }
+    if (this.getUserCount()==0){
+        this.stopGame();
+    }
 };
 
 GRoom.prototype.getUser = function(uid){
@@ -192,6 +197,7 @@ GRoom.prototype.getUser = function(uid){
 };
 
 GRoom.prototype.setCursor = function(uid,tid){
+    var result = false;
     switch(this.state){
         case GCODE.GAME.STAT_RESET:
             break;
@@ -205,24 +211,33 @@ GRoom.prototype.setCursor = function(uid,tid){
 //                console.log('GRoom.prototype.setCursor !!!!!');
 //                console.log(this.groups[user.rtype]);
                 this.pushMessageByUids('onUserCursor',
-                    {user:user,tid:tid},
+                    {user:user,fid:user.idx,tid:tid},
                     this.groups[user.rtype]);
+
+                result = true;
             }
         }
             break;
         case GCODE.GAME.STAT_FIGHT:
         {
+            var user = this.getUser(uid);
+            user.tid = tid;
             var param = {
                 route: 'onUserCursor',
                 user:user,
+                fid:user.idx,
                 tid:tid
             };
             this.pushMessage(param);
+
+            result = true;
         }
             break;
         default:
             break;
     }
+
+    return result;
 }
 
 GRoom.prototype.setUser = function(uid,key,val){
@@ -262,7 +277,7 @@ GRoom.prototype.pushMessageByUids = function(route, msg, uids, opts, cb) {
 };
 
 GRoom.prototype.setReady = function(uid,ready) {
-
+    var result = ready;
     var user = this.getUser(uid);
     if (!!user){
         if (user.master && ready){
@@ -278,13 +293,23 @@ GRoom.prototype.setReady = function(uid,ready) {
                 }
                 console.log("ready:%d",ready_cnt);
                 if (ready_cnt >= GCODE.ROOM.USER_MIN){
-                    user.ready = true;
+                    user.ready = ready;
+
+                    var param = {
+                        route: 'onUserReady',
+                        user: user,
+                        ready:ready
+                    };
+                    this.pushMessage(param);
+
                     this.startGame();
                 }else{
-
+                    // 人数够但准备不够。
+                    result = false;
                 }
             }else{
-
+                // 人数不够。
+                result = false;
             }
         }else{
             user.ready = ready;
@@ -299,7 +324,7 @@ GRoom.prototype.setReady = function(uid,ready) {
 
     }
 
-//    console.log(this.users);
+    return result;
 };
 
 GRoom.prototype.randRoles = function() {
@@ -422,11 +447,13 @@ GRoom.prototype.getTarget = function(rtype) {
     var tids = [];
     for (var i = 0,len = groups.length; i < len ; ++ i){
         var user = this.getUser(groups[i].uid);
-        if (!!user && !!user.tid){
+        if (!!user && user.tid!=null){
             tids.push(user.tid);
         }
     }
+
     var tid = this.getMaxCountMember(tids);
+    console.log('getTarget rtype:'+rtype+' -> '+tids+':'+tid);
     var user_get;
     if (!!tid){
         user_get = this.users[tid];
@@ -435,6 +462,7 @@ GRoom.prototype.getTarget = function(rtype) {
 };
 
 GRoom.prototype.doKillerTarget = function() {
+    console.log('doKillerTarget');
     var target = this.getTarget(GCODE.RTYPE.ROLE_KILLER);
     if (!!target){
         target.enable = false;
@@ -445,16 +473,17 @@ GRoom.prototype.doKillerTarget = function() {
 };
 
 GRoom.prototype.doPoliceTarget = function() {
+    console.log('doPoliceTarget');
     var target = this.getTarget(GCODE.RTYPE.ROLE_POLICE);
     if (!!target){
         this.pushMessageByUids('onUserUpdate',
             {event:GCODE.EVENT.FUNC_POLICE,user:target},
             this.groups[GCODE.RTYPE.ROLE_POLICE]);
     }
-
 };
 
 GRoom.prototype.doJudgeTarget = function() {
+    console.log('doJudgeTarget');
     var target = this.getTarget(GCODE.RTYPE.ROLE_ALL);
     if (!!target){
         target.enable = false;
@@ -496,8 +525,8 @@ GRoom.prototype.hintResult = function() {
     console.log('hintResult >> %d %d %d',killer_count,police_count,civizn_count);
 };
 
-GRoom.prototype.endGameState = function(state) {
-    switch(state){
+GRoom.prototype.endGameState = function() {
+    switch(this.state){
         case GCODE.GAME.STAT_RESET:
             break;
         case GCODE.GAME.STAT_NIGHT:
@@ -516,11 +545,19 @@ GRoom.prototype.endGameState = function(state) {
         default:
             break;
     }
+
+    var users = this.users;
+    for (var i = 0,len = users.length ; i < len ; ++ i)
+    {
+        var usr = users[i];
+        console.log('usr tid '+i+':'+usr.tid);
+        usr.tid = null;
+    }
 };
 
 GRoom.prototype.onGameState = function(state) {
 
-    this.endGameState(state);
+    this.endGameState();
 
     if (this.door!=GCODE.ROOM.G_ROOM_GAME){
         return;
@@ -536,10 +573,10 @@ GRoom.prototype.onGameState = function(state) {
     switch(state)
     {
         case GCODE.GAME.STAT_NIGHT:
-            this.requireNextGameState(GCODE.GAME.STAT_FIGHT,30000);
+            this.requireNextGameState(GCODE.GAME.STAT_FIGHT,15000);
             break;
         case GCODE.GAME.STAT_FIGHT:
-            this.requireNextGameState(GCODE.GAME.STAT_NIGHT,30000);
+            this.requireNextGameState(GCODE.GAME.STAT_NIGHT,15000);
             break;
         default :
             break;
@@ -552,6 +589,7 @@ GRoom.prototype.requireNextGameState = function(state,time) {
     if (time > 0){
         self.tid = setTimeout(
             function(){
+
 
                 self.onGameState(state);
 
@@ -572,20 +610,23 @@ GRoom.prototype.startGame = function() {
     self.randRTypes();
 
     self.pushMessageByUids('onGameStart',
-        {rtype:GCODE.RTYPE.ROLE_CIVILIAN},
+        {users:self.users,rtype:GCODE.RTYPE.ROLE_CIVILIAN},
         this.groups[GCODE.RTYPE.ROLE_CIVILIAN]);
     self.pushMessageByUids('onGameStart',
-        {rtype:GCODE.RTYPE.ROLE_POLICE},
+        {users:self.users,rtype:GCODE.RTYPE.ROLE_POLICE},
         this.groups[GCODE.RTYPE.ROLE_POLICE]);
     self.pushMessageByUids('onGameStart',
-        {rtype:GCODE.RTYPE.ROLE_KILLER},
+        {users:self.users,rtype:GCODE.RTYPE.ROLE_KILLER},
         this.groups[GCODE.RTYPE.ROLE_KILLER]);
 
+    this.state = GCODE.GAME.STAT_RESET;
     this.requireNextGameState(GCODE.GAME.STAT_NIGHT,0);
 
 };
 
 GRoom.prototype.stopGame = function() {
+    console.log('stopGame');
+
     var param = {
         route: 'onGameStop',
         users:this.users
@@ -598,15 +639,14 @@ GRoom.prototype.stopGame = function() {
     }
 
     // 小型房间的设定是：停止游戏后，直到所有玩家退出前，不会再开放。
-    this.door = GCODE.ROOM.G_ROOM_READY;
+//    this.door = GCODE.ROOM.G_ROOM_OPEN;
 
-    /*
-     if (this.getUserCount()>=GCODE.ROOM.USER_SIZE){
-     this.state = GCODE.ROOM.G_ROOM_READY;
-     }else{
-     this.state = GCODE.ROOM.G_ROOM_OPEN;
-     }
-     */
+    if (this.getUserCount()>=GCODE.ROOM.USER_MAX){
+        this.door = GCODE.ROOM.G_ROOM_FULL;
+    }else{
+        this.door = GCODE.ROOM.G_ROOM_OPEN;
+    }
+
 };
 
 GRoom.prototype.getUserData = function(uid,key) {

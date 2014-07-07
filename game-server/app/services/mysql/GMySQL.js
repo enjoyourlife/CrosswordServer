@@ -162,11 +162,11 @@ GMySQL.prototype.use = function(uid,val,next) {
                     if (gold >= val){
                         SQLUseMoney(gold);
                     }else{
-                        next(null, {code: 500,msg: 'Register Failed��'});
+                        next(null, {code: 500,msg: 'Register A Failed��'});
                         self.conn.end();
                     }
                 }else{
-                    next(null, {code: 500,msg: 'Register Failed��'});
+                    next(null, {code: 500,msg: 'Register B Failed��'});
                     self.conn.end();
                 }
             }

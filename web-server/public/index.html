@@ -230,6 +230,21 @@
 //		addUser(user);
 	});
 
+      pomelo.on('onUserReady', function(data) {
+          console.log('onUserReady ...');
+          console.log(data);
+      });
+
+      pomelo.on('onUserCursor', function(data) {
+          console.log('onUserCursor ...');
+          console.log(data);
+      });
+
+      pomelo.on('onUserUpdate', function(data) {
+          console.log('onUserUpdate ...');
+          console.log(data);
+      });
+
 	//update user list
 	pomelo.on('onUserExit', function(data) {
 		console.log('onUserExit ... ');
@@ -256,6 +271,11 @@
 //		tip('offline', user);
 //		removeUser(user);
 	});
+
+      pomelo.on('onGameState', function(data) {
+          console.log('onGameState ... ');
+          console.log(data);
+      });
 
       pomelo.on('onGameRound', function(data) {
           console.log('onGameRound ... ');

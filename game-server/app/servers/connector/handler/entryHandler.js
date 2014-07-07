@@ -319,7 +319,7 @@ Handler.prototype.enter = function(msg, session, next) {
         // add channel for session.
         rpc.gameRemote.add(session,
             uid, self.app.get('serverId'),xcid,
-            function(err,cid,users){
+            function(err,cid,users,user){
                 if(err){
                     console.log(err);
                     next(null, {code: 500});
@@ -357,7 +357,7 @@ Handler.prototype.enter = function(msg, session, next) {
                     }
                 });
 
-                next(null, {code: 200,users: users});
+                next(null, {code: 200,users:users,user:user,cid:cid});
             });
 
     }else{
