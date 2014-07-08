@@ -127,7 +127,7 @@ GMySQL.prototype.pay = function(msg,next) {
 
 };
 
-GMySQL.prototype.use = function(uid,val,next) {
+GMySQL.prototype.use = function(uid,val,next,cb) {
 
     var self = this;
 
@@ -138,6 +138,7 @@ GMySQL.prototype.use = function(uid,val,next) {
             function(err, rows, fields) {
                 if (err) throw err;
 
+                cb();
                 next(null, {code: 200});
                 self.conn.end();
             });
@@ -162,11 +163,11 @@ GMySQL.prototype.use = function(uid,val,next) {
                     if (gold >= val){
                         SQLUseMoney(gold);
                     }else{
-                        next(null, {code: 500,msg: 'Register A Failed��'});
+                        next(null, {code: 500,gold:gold,msg: 'Register A Failed��'});
                         self.conn.end();
                     }
                 }else{
-                    next(null, {code: 500,msg: 'Register B Failed��'});
+                    next(null, {code: 500,gold:0,msg: 'Register B Failed��'});
                     self.conn.end();
                 }
             }

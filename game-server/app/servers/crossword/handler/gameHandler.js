@@ -59,8 +59,19 @@ Handler.prototype.use = function(msg, session, next) {
 
     var uid = session.uid;
     var iid = msg.iid;
+    var arg = msg.arg;
     var val = this.gameConfig.getById(iid,'items','price');
 
-    mysql.use(uid,val,next);
+    var cid = session.get('cid');
+
+    var room = this.gameHall.getRoomById(cid);
+    if (!!room){
+        mysql.use(uid,val,next,function(){
+            room.useItem(iid,arg);
+        });
+
+    }
+
+
 
 };

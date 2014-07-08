@@ -202,6 +202,18 @@ var GRoom = function(app,channel,xcid){
     this.config = app.get('GConfig');
 
     this.xcid.time = this.config.getById(this.xcid.level,'levels','time');
+
+
+};
+
+GRoom.prototype.useItem = function(iid,arg){
+    switch(iid)
+    {
+        case 3:
+            break;
+        case 4:
+            break;
+    }
 };
 
 GRoom.prototype.isType = function(xcid){
