@@ -40,6 +40,8 @@ GUser.prototype.init = function(uid){
     this.info = null;
     this.blood = 0;
 
+    this.exp_mult = 1;
+
 //    var self = this;
 //    var mysql = new GMySQL();
 //    mysql.info({uid:uid,gid:'crossword'},function(err,msg){
@@ -59,6 +61,8 @@ GUser.prototype.fini = function(){
     this.rewards = {pass:0,every:0,special:0,specialexp:0};
     this.info = null;
     this.blood = 0;
+
+    this.exp_mult = 1;
 };
 
 GUser.prototype.initChess = function(chess){
@@ -71,6 +75,8 @@ GUser.prototype.initChess = function(chess){
             this.flags.push(words[i].flag);
         }
     }
+
+    this.exp_mult = 1;
 };
 
 GUser.prototype.setChessByPos = function(pos){
@@ -146,6 +152,8 @@ GUser.prototype.getReward = function(cfg){
     exp += this.rewards.every * cfg['everyexp'];
     exp += this.rewards.specialexp * cfg['specialexp'];
 
+    exp *= this.exp_mult;
+
 //    if (GUtils.randInt(1,100)>50){
 //        gold += this.rewards.special * cfg['specialsilver'];
 //    }else{
@@ -206,12 +214,22 @@ var GRoom = function(app,channel,xcid){
 
 };
 
-GRoom.prototype.useItem = function(iid,arg){
+GRoom.prototype.useItem = function(uid,iid,arg){
+    console.log('useItem:'+uid+','+iid+','+arg);
     switch(iid)
     {
         case 3:
+        {
+            var user = this.getUser(uid);
+            if (!!user){
+                user.exp_mult = 2;
+            }
+        }
             break;
         case 4:
+        {
+            this.time_cnt -= arg;
+        }
             break;
     }
 };

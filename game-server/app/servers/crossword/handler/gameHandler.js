@@ -67,7 +67,7 @@ Handler.prototype.use = function(msg, session, next) {
     var room = this.gameHall.getRoomById(cid);
     if (!!room){
         mysql.use(uid,val,next,function(){
-            room.useItem(iid,arg);
+            room.useItem(uid,iid,arg);
         });
 
     }

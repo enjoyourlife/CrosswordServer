@@ -139,7 +139,7 @@ GMySQL.prototype.use = function(uid,val,next,cb) {
                 if (err) throw err;
 
                 cb();
-                next(null, {code: 200});
+                next(null, {code: 200,gold:(gold-val)});
                 self.conn.end();
             });
     };
