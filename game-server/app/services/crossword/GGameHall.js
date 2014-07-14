@@ -214,7 +214,7 @@ var GRoom = function(app,channel,xcid){
 
 };
 
-GRoom.prototype.useItem = function(uid,iid,arg){
+GRoom.prototype.useItem = function(uid,iid,gold,arg){
     console.log('useItem:'+uid+','+iid+','+arg);
     switch(iid)
     {
@@ -231,7 +231,21 @@ GRoom.prototype.useItem = function(uid,iid,arg){
             this.time_cnt -= arg;
         }
             break;
+        case 5:
+        {
+
+        }
+            break;
     }
+
+    var param = {
+        route: 'onGameItem',
+        iid: iid,
+        uid: uid,
+        arg: arg,
+        gold: gold
+    };
+    this.pushMessage(param);
 };
 
 GRoom.prototype.isType = function(xcid){

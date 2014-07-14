@@ -2,6 +2,7 @@
  * Created by Administrator on 2014/4/11.
  * 备注事项：
  */
+var GUtils = require('../utils/GUtils');
 var GCODE = {
     ROOM: {
         USER_MIN:  3,
@@ -43,24 +44,53 @@ var GUser = function(idx){
 GUser.prototype.init = function(uid){
     this.reset();
 
+
     this.uid = uid;
     this.dat = {};
+
+    this.ins=null;
+    this.master=false;
 };
 
 GUser.prototype.fini = function(){
     this.reset();
+
+    this.uid=null;
+
+    this.ins=null;
+    this.master=false;
 };
 
 GUser.prototype.reset = function(){
-    this.uid=null;
-    this.ins=null;
+
     this.tid=null;
     this.dat=null;
     this.ready=false;
-    this.master=false;
+
+    this.check=false;
     this.enable=true;
     this.rand=0.0;
+
     this.rtype=GCODE.RTYPE.ROLE_ALL;
+};
+
+GUser.prototype.toRType = function(rtype){
+    var to_rtype = GCODE.RTYPE.ROLE_ALL;
+    if (this.rtype==rtype){
+        to_rtype = this.rtype;
+    }
+    if (GCODE.RTYPE.ROLE_POLICE==rtype && this.check){
+        to_rtype = this.rtype;
+    }
+    return to_rtype;
+};
+
+GUser.prototype.getByRType = function(rtype){
+
+    var sdata = {idx:this.idx,uid:this.uid,
+        rtype:this.toRType(rtype)};
+
+    return sdata;
 };
 
 // Room State: OPEN READY GAME
@@ -77,7 +107,18 @@ var GRoom = function(cid){
     this.usr_cnt = 0;
     this.groups = {};
 
-    this.randRoles();
+//    this.randRoles();
+};
+
+GRoom.prototype.getUsersByRType = function(rtype){
+    var sdata = [];
+    var users = this.users;
+    for (var i = 0 , len = users.length ; i < len ; ++ i){
+        var usr = users[i];
+//        sdata.push({idx:usr.idx,uid:usr.uid,rtype:usr.toRType(rtype)});
+        sdata.push(usr.getByRType(rtype));
+    }
+    return sdata;
 };
 
 GRoom.prototype.instance = function(app){
@@ -128,6 +169,7 @@ GRoom.prototype.addUser = function(uid,sid,cb){
         var user = users[i];
         if (!user.uid){
             user.init(uid);
+            user.ins = this.randIns();
             user_get = user;
             this.usr_cnt ++;
             break;
@@ -175,7 +217,7 @@ GRoom.prototype.delUser = function(uid,sid){
     this.pushMessage(param);
 
     // 这是小型房间的设定。
-    if (this.getUserCount()==0){
+    if (this.getUserCount()==0 && !this.isOpen()){
         this.stopGame();
     }
 };
@@ -327,6 +369,35 @@ GRoom.prototype.setReady = function(uid,ready) {
     return result;
 };
 
+GRoom.prototype.randIns = function() {
+    var inses = [];
+
+    var users = this.users;
+    for (var i = 0,len = users.length ; i < len ; ++ i){
+        var usr = users[i];
+        if (usr.ins != null){
+            inses.push(usr.ins);
+        }
+    }
+
+
+    var rnd = 0;
+
+    do {
+        rnd = GUtils.randInt(0,15);
+        var find = false;
+        for (var i = 0,len = inses.length ; i < len ; ++ i){
+            if (rnd == inses[i]){
+                find = true;
+                break;
+            }
+        }
+    }while(find);
+
+
+    return rnd;
+};
+
 GRoom.prototype.randRoles = function() {
     var users = this.users;
     var ins = [];
@@ -423,7 +494,7 @@ GRoom.prototype.getMaxCountMember = function(array) {
         val = array[i];
         count = counts[val];
         if (count==null){
-            counts[val] = 0;
+            counts[val] = 1;
         }else{
             counts[val] = count + 1;
         }
@@ -431,15 +502,19 @@ GRoom.prototype.getMaxCountMember = function(array) {
 
     var max = 0;
     var result;
+    var same = false;
     for (var key in counts){
         count = counts[key];
         if (max < count){
             max = count;
             result = key;
+            same = false;
+        }else if (max==count){
+            same = true;
         }
     }
 
-    return result;
+    return same?null:result;
 };
 
 GRoom.prototype.getTarget = function(rtype) {
@@ -454,7 +529,7 @@ GRoom.prototype.getTarget = function(rtype) {
 
     var tid = this.getMaxCountMember(tids);
     console.log('getTarget rtype:'+rtype+' -> '+tids+':'+tid);
-    var user_get;
+    var user_get = null;
     if (!!tid){
         user_get = this.users[tid];
     }
@@ -467,17 +542,19 @@ GRoom.prototype.doKillerTarget = function() {
     if (!!target){
         target.enable = false;
         this.pushMessage('onUserUpdate',
-            {event:GCODE.EVENT.FUNC_KILL,user:target});
+            {event:GCODE.EVENT.FUNC_KILL,
+                user:target.getByRType(GCODE.RTYPE.ROLE_KILLER)});
     }
-
 };
 
 GRoom.prototype.doPoliceTarget = function() {
     console.log('doPoliceTarget');
     var target = this.getTarget(GCODE.RTYPE.ROLE_POLICE);
     if (!!target){
+        target.check = true;
         this.pushMessageByUids('onUserUpdate',
-            {event:GCODE.EVENT.FUNC_POLICE,user:target},
+            {event:GCODE.EVENT.FUNC_POLICE,
+                user:target.getByRType(GCODE.RTYPE.ROLE_POLICE)},
             this.groups[GCODE.RTYPE.ROLE_POLICE]);
     }
 };
@@ -488,7 +565,8 @@ GRoom.prototype.doJudgeTarget = function() {
     if (!!target){
         target.enable = false;
         this.pushMessage('onUserUpdate',
-            {event:GCODE.EVENT.FUNC_FIGHT,user:target});
+            {event:GCODE.EVENT.FUNC_FIGHT,
+                user:target.getByRType(GCODE.RTYPE.ROLE_ALL)});
     }
 };
 
@@ -573,10 +651,10 @@ GRoom.prototype.onGameState = function(state) {
     switch(state)
     {
         case GCODE.GAME.STAT_NIGHT:
-            this.requireNextGameState(GCODE.GAME.STAT_FIGHT,15000);
+            this.requireNextGameState(GCODE.GAME.STAT_FIGHT,20000);
             break;
         case GCODE.GAME.STAT_FIGHT:
-            this.requireNextGameState(GCODE.GAME.STAT_NIGHT,15000);
+            this.requireNextGameState(GCODE.GAME.STAT_NIGHT,20000);
             break;
         default :
             break;
@@ -610,13 +688,16 @@ GRoom.prototype.startGame = function() {
     self.randRTypes();
 
     self.pushMessageByUids('onGameStart',
-        {users:self.users,rtype:GCODE.RTYPE.ROLE_CIVILIAN},
+        {users:self.getUsersByRType(GCODE.RTYPE.ROLE_CIVILIAN),
+            rtype:GCODE.RTYPE.ROLE_CIVILIAN},
         this.groups[GCODE.RTYPE.ROLE_CIVILIAN]);
     self.pushMessageByUids('onGameStart',
-        {users:self.users,rtype:GCODE.RTYPE.ROLE_POLICE},
+        {users:self.getUsersByRType(GCODE.RTYPE.ROLE_POLICE),
+            rtype:GCODE.RTYPE.ROLE_POLICE},
         this.groups[GCODE.RTYPE.ROLE_POLICE]);
     self.pushMessageByUids('onGameStart',
-        {users:self.users,rtype:GCODE.RTYPE.ROLE_KILLER},
+        {users:self.getUsersByRType(GCODE.RTYPE.ROLE_KILLER),
+            rtype:GCODE.RTYPE.ROLE_KILLER},
         this.groups[GCODE.RTYPE.ROLE_KILLER]);
 
     this.state = GCODE.GAME.STAT_RESET;
@@ -626,6 +707,13 @@ GRoom.prototype.startGame = function() {
 
 GRoom.prototype.stopGame = function() {
     console.log('stopGame');
+
+    var users = this.users;
+    for (var i = 0,len = users.length ; i < len ; ++ i)
+    {
+        var usr = users[i];
+        usr.reset();
+    }
 
     var param = {
         route: 'onGameStop',

@@ -175,8 +175,7 @@
       function use() {
 
           pomelo.request("crossword.gameHandler.use", {
-              iid: 4,
-              arg: 60
+              iid: 3
           }, function(data) {
               console.log(data);
           });
@@ -254,6 +253,11 @@
 //		tip('offline', user);
 //		removeUser(user);
 	});
+
+      pomelo.on('onGameItem', function(data) {
+          console.log('onGameItem ... ');
+          console.log(data);
+      });
 
     pomelo.on('onGameReady', function(data) {
         console.log('onGameReady ... ');
