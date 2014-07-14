@@ -127,7 +127,7 @@ GMySQL.prototype.pay = function(msg,next) {
 
 };
 
-GMySQL.prototype.use = function(uid,val,arg,next,cb) {
+GMySQL.prototype.use = function(uid,iid,val,arg,next,cb) {
 
     var self = this;
 
@@ -139,7 +139,7 @@ GMySQL.prototype.use = function(uid,val,arg,next,cb) {
                 if (err) throw err;
 
                 cb((gold-val));
-                next(null, {code: 200,gold:(gold-val),arg:arg});
+                next(null, {code: 200,uid:uid,iid:iid,gold:(gold-val),arg:arg});
                 self.conn.end();
             });
     };
