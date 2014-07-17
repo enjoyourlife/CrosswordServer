@@ -69,7 +69,7 @@ Handler.prototype.dologin = function(uid, info, msg, session, next){
 Handler.prototype.register = function(msg, session, next) {
 
     if (!!session.uid){
-        next(null, {code: 500,result: 0});
+        next(null, {code: 500,eid:402,result: 0});
         return;
     }
 
@@ -77,9 +77,11 @@ Handler.prototype.register = function(msg, session, next) {
 
     var usr = msg.usr;
     var pwd = msg.pwd;
+    var sex = msg.sex;
+    var nick = msg.nick;
 
-    if (!usr || !pwd){
-        next(null, {code: 500});
+    if (!usr || !pwd || !sex || !nick){
+        next(null, {code: 500,eid: 401});
         return;
     }
 
@@ -87,7 +89,7 @@ Handler.prototype.register = function(msg, session, next) {
 
     var SQLInsertUser = function()
     {
-        var sql = 'INSERT INTO user (name, password) VALUES (\''+usr+'\', \''+pwd+'\')';
+        var sql = 'INSERT INTO user (name, password,nick,sex) VALUES (\''+usr+'\', \''+pwd+'\',\''+nick+'\','+sex+')';
         mysql.conn.query(sql,
             function(err, rows, fields) {
                 if (err) throw err;
@@ -106,7 +108,7 @@ Handler.prototype.register = function(msg, session, next) {
                 if (err) throw err;
 
                 if (rows.length==1){
-                    next(null, {code: 500,msg: 'Register Failed��'});
+                    next(null, {code: 500,eid: 601,msg: 'Register Failed��'});
                     mysql.conn.end();
                 }else{
                     SQLInsertUser();
@@ -119,6 +121,7 @@ Handler.prototype.register = function(msg, session, next) {
         if(error) {
             console.log('Connection Error: ' + error.message);
             mysql.conn.end();
+            next(null, {code: 500,eid: 501,msg: 'Register Failed��'});
             return;
         }
         console.log('Connected to MySQL');

@@ -56,6 +56,20 @@
           });
         });
       }
+
+      function register() {
+
+          pomelo.request("connector.entryHandler.register", {
+              usr: 'userx',
+              pwd: 'pwd',
+              nick: 'mike',
+              sex: 1,
+              gid: 'crossword'
+          }, function(data) {
+              console.log(data);
+          });
+
+      }
       
       function loginA() {
 
@@ -336,6 +350,9 @@
       <div class="g-button">
         <input id="test" type="button" value="Test Game Server" onclick="show()"/>
       </div>
+        <div class="g-button">
+            <input id="test" type="button" value="Reg Game Server" onclick="register()"/>
+        </div>
       <div class="g-button">
         <input id="test" type="button" value="Login A Game Server" onclick="loginA()"/>
       </div>
