@@ -89,7 +89,7 @@ Handler.prototype.register = function(msg, session, next) {
 
     var SQLInsertUser = function()
     {
-        var sql = 'INSERT INTO user (name, password,nick,sex) VALUES (\''+usr+'\', \''+pwd+'\',\''+nick+'\','+sex+')';
+        var sql = 'INSERT INTO user (name, password,nick,sex,uuid) VALUES (\''+usr+'\', \''+pwd+'\',\''+nick+'\','+sex+',\'empty\')';
         mysql.conn.query(sql,
             function(err, rows, fields) {
                 if (err) throw err;
@@ -102,7 +102,7 @@ Handler.prototype.register = function(msg, session, next) {
 
     var SQLFindUser = function()
     {
-        var sql = 'SELECT * FROM user WHERE name=\''+usr+'\' AND password=\''+pwd+'\'';
+        var sql = 'SELECT * FROM user WHERE name=\''+usr+'\'';
         mysql.conn.query(sql,
             function(err, rows, fields) {
                 if (err) throw err;
@@ -153,19 +153,20 @@ Handler.prototype.login = function(msg, session, next) {
 
     var SQLLoginUser = function()
     {
-        mysql.conn.query('SELECT * FROM user WHERE name=\''+usr+'\' AND password=\''+pwd+'\' LIMIT 0,30',
+        mysql.conn.query('SELECT user.id as uid,user.name,user.nick,user.sex,'+gid+'.gold,'+gid+'.exp FROM user LEFT JOIN '+gid
+                +' ON user.id='+gid+'.uid WHERE name=\''+usr+'\' AND password=\''+pwd+'\' LIMIT 0,30',
             function(err, rows, fields) {
                 if (err) throw err;
 
                 if (rows.length==1){
 
-                    var uid = rows[0]['id'];
+                    var uid = rows[0]['uid'];
                     var info = rows[0];
 
                     console.log(info);
 
-                    delete info.uuid;
-                    delete info.password;
+//                    delete info.uuid;
+//                    delete info.password;
 
                     self.dologin(uid,info,msg,session,next);
 
