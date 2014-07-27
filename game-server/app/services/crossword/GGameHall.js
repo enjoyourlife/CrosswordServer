@@ -35,6 +35,7 @@ GUser.prototype.init = function(uid){
 
     this.chess = null;
     this.flags = null;
+    this.aichess = null;
 
     this.rewards = {pass:0,every:0,special:0,specialexp:0};
     this.info = null;
@@ -77,6 +78,23 @@ GUser.prototype.initChess = function(chess){
     }
 
     this.exp_mult = 1;
+
+    // 设置AI棋盘
+    this.aichess = [];
+    for (var i = 0 ; i < words.length ; ++ i){
+        this.aichess[i] = i;
+    }
+    var len = words.length;
+    for (var i = 0 ; i < 100 ; ++ i){
+        var a = GUtils.randInt(0,len-1);
+        var b = GUtils.randInt(0,len-1);
+        if (a!=b){
+            var tmp = this.aichess[a];
+            this.aichess[a] = this.aichess[b];
+            this.aichess[b] = tmp;
+        }
+    }
+
 };
 
 GUser.prototype.setChessByPos = function(pos){
@@ -101,6 +119,14 @@ GUser.prototype.setChessByPos = function(pos){
     }
 
     return ret;
+};
+
+GUser.prototype.getAIChess = function(){
+    var val = null;
+    if (this.aichess.length > 0){
+        val = this.aichess.pop();
+    }
+    return val;
 };
 
 GUser.prototype.setChess = function(pos){
@@ -204,6 +230,8 @@ var GRoom = function(app,channel,xcid){
     this.door = GCODE.ROOM.G_ROOM_OPEN;
     this.tid = null;
     this.iid = null;
+    this.atid = null;
+    this.aiid = null;
     this.usr_cnt = 0;
     this.time_cnt = 0;
     this.chess = null;
@@ -273,16 +301,24 @@ GRoom.prototype.chat = function(uid,content){
     this.pushMessage(param);
 };
 
-GRoom.prototype.addUser = function(uid,sid){
+GRoom.prototype.hasAIUser = function(){
+    var user = this.getUser(0);
+    return (!!user);
+};
 
-//    console.log('addUser ...'+uid);
+GRoom.prototype.addAIUser = function(uid,sid){
+    this.addUser(uid,sid);
+};
+
+GRoom.prototype.addUser = function(uid,sid){
+    var self = this;
+
     this.channel.add(uid,sid);
-//    console.log('getMembers ...'+this.channel.getMembers());
 
     var users = this.users;
     for (var i = 0 , len = users.length ; i < len ; ++ i){
         var user = users[i];
-        if (!user.uid){
+        if (user.uid==null){
             user.init(uid);
             this.usr_cnt ++;
             break;
@@ -299,6 +335,16 @@ GRoom.prototype.addUser = function(uid,sid){
 
     if (this.getUserCount()>=GCODE.ROOM.USER_SIZE){
         this.door = GCODE.ROOM.G_ROOM_READY;
+    }else{
+        // 处理AI问题.
+        this.atid = setTimeout(
+            function(){
+                console.log('add ai ...');
+                self.atid = null;
+                self.addAIUser(0,sid);
+                self.autoStart();
+            }
+            ,10000);
     }
 };
 
@@ -318,7 +364,7 @@ GRoom.prototype.delUser = function(uid,sid){
     };
     this.pushMessage(param);
 
-//    console.log('delUser ...'+uid);
+    console.log('delUser ...'+uid);
     this.channel.leave(uid,sid);
 //    console.log('getMembers ...'+this.channel.getMembers());
 
@@ -334,12 +380,20 @@ GRoom.prototype.delUser = function(uid,sid){
 
     // 这是小型房间的设定。
     if (this.getUserCount()==0){
+        if (this.atid!=null){
+            clearTimeout(this.atid);
+        }
         this.door = GCODE.ROOM.G_ROOM_OPEN;
+    }else{
+        // 查找AI玩家
+        if (this.hasAIUser()){
+            this.delUser(0,sid);
+        }
     }
 };
 
 GRoom.prototype.getUser = function(uid){
-    if (!uid){
+    if (uid==null){
         return null;
     }
     var user_get;
@@ -428,6 +482,25 @@ GRoom.prototype.pushMessage = function(route, msg, opts, cb) {
     this.channel.pushMessage(route,msg,opts,cb);
 };
 
+GRoom.prototype.startAITime = function() {
+    var self = this;
+    var min = this.config.getById(0,'ai','min');
+    var max = this.config.getById(0,'ai','max');
+    this.aiid = setTimeout(
+        function(){
+            var user = self.getUser(0);
+            if (!!user){
+                var val = user.getAIChess();
+                self.setUser(0,'game',val);
+                console.log('startAITime ...'+val);
+            }
+
+            self.aiid = null;
+
+            self.startAITime();
+
+        },GUtils.randInt(min,max)*1000);
+};
 GRoom.prototype.startTime = function() {
     var self = this;
     this.time_cnt = 0;
@@ -451,6 +524,10 @@ GRoom.prototype.startTime = function() {
             }
 
         },time_tab*1000);
+
+    if (this.hasAIUser()){
+        this.startAITime();
+    }
 };
 
 GRoom.prototype.autoStart = function() {
@@ -530,6 +607,11 @@ GRoom.prototype.stopGame = function(flag) {
     if (!!this.iid){
         clearInterval(this.iid);
         this.iid = null;
+    }
+
+    if (!!this.aiid){
+        clearTimeout(this.aiid);
+        this.aiid = null;
     }
 
     // 小型房间的设定是：停止游戏后，直到所有玩家退出前，不会再开放。
