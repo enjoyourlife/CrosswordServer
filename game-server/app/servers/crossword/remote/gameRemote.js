@@ -21,7 +21,7 @@ GameRemote.prototype.add = function(uid, sid, cid, cb) {
     if (!!room){
         room.addUser(uid,sid);
         room.autoStart();
-        cb(null,room.cid,room.users);
+        cb(null,room.cid,room.getUsers(false));
     }else{
         cb('err when add',null,null);
     }

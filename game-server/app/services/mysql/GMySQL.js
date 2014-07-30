@@ -188,8 +188,6 @@ GMySQL.prototype.use = function(uid,iid,val,arg,next,cb) {
 
 GMySQL.prototype.reward = function(uid,gold_val,exp_val,next) {
 
-
-
     var self = this;
 
     var SQLSetReward = function(gold,exp,insert)
@@ -209,13 +207,7 @@ GMySQL.prototype.reward = function(uid,gold_val,exp_val,next) {
                 self.conn.end();
             });
     };
-    /*
-     SELECT user.id, crossword.gold
-     FROM user
-     LEFT JOIN crossword ON user.id = crossword.uid
-     WHERE user.name = 'user1'
-     LIMIT 0 , 30
-     */
+
     var SQLGetReward = function()
     {
 

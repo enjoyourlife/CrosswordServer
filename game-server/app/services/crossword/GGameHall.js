@@ -187,32 +187,21 @@ GUser.prototype.getReward = function(cfg){
 //    }
 
     var result = {gold:gold,exp:exp};
+
     return result;
 };
 
 GUser.prototype.setReward = function(cfg){
 
-//    var cfg = config.getById(0,'rewards');
-
-//    var gold = 0;
-//    gold += this.rewards.pass * cfg['passsilver'];
-//    gold += this.rewards.every * cfg['everysilver'];
-//    gold += this.rewards.special * cfg['specialsilver'];
-//
-//    var exp = 0;
-//    exp += this.rewards.pass * cfg['passexp'];
-//    exp += this.rewards.every * cfg['everyexp'];
-//    exp += this.rewards.special * cfg['specialexp'];
-
-//    console.log(cfg);
-
-//    console.log("gold:"+gold+" exp:"+exp);
-
     var val = this.getReward(cfg);
 
     if (!!this.uid){
         var mysql = new GMySQL();
-        mysql.reward(this.uid,val.gold,val.exp,function(err,msg){});
+        mysql.reward(this.uid,val.gold,val.exp,
+            function(err,msg)
+            {
+
+            });
     }
 
 };
@@ -335,6 +324,9 @@ GRoom.prototype.addUser = function(uid,sid){
 
     if (this.getUserCount()>=GCODE.ROOM.USER_SIZE){
         this.door = GCODE.ROOM.G_ROOM_READY;
+        if (this.atid!=null){
+            clearTimeout(this.atid);
+        }
     }else{
         // 处理AI问题.
         this.atid = setTimeout(
