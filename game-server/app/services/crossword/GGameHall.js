@@ -578,6 +578,10 @@ GRoom.prototype.autoStart = function() {
 
 GRoom.prototype.stopGame = function(flag) {
 
+    if (this.door != GCODE.ROOM.G_ROOM_GAME){
+        return;
+    }
+
     var users = this.users;
     var cfg =  this.config.getById(this.xcid.level,'rewards');
 
