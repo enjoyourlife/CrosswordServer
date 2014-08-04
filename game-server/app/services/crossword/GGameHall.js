@@ -409,9 +409,9 @@ GRoom.prototype.getUsers = function(is_chess){
             var cfg =  this.config.getById(this.xcid.level,'rewards');
             sdata.push({idx:usr.idx,uid:usr.uid,
                 rewards:usr.getReward(cfg),
-                chess:usr.chess,flags:usr.flags});
+                chess:usr.chess,flags:usr.flags,robot:(usr.uid==0)});
         }else{
-            sdata.push({idx:usr.idx,uid:usr.uid});
+            sdata.push({idx:usr.idx,uid:usr.uid,robot:(usr.uid==0)});
         }
     }
     return sdata;
@@ -517,9 +517,7 @@ GRoom.prototype.startTime = function() {
 
         },time_tab*1000);
 
-    if (this.hasAIUser()){
-        this.startAITime();
-    }
+
 };
 
 GRoom.prototype.autoStart = function() {
@@ -570,6 +568,10 @@ GRoom.prototype.autoStart = function() {
 
             if (self.xcid.type!=1){
                 self.startTime();
+            }
+
+            if (self.hasAIUser()){
+                self.startAITime();
             }
         }
         ,3000);
@@ -970,6 +972,10 @@ GRoomEx.prototype.stopGame = function(flag) {
 
 GRoomEx.prototype.setUser = function(uid,key,val){
     if (this.door!=GCODE.ROOM_EX.G_ROOM_GAME){
+        return;
+    }
+
+    if (val==null || uid==null){
         return;
     }
 
