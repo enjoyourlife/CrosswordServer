@@ -278,3 +278,112 @@ GMySQL.prototype.getWords = function(next) {
 
 
 };
+
+GMySQL.prototype.getTops = function(msg,next) {
+    var self = this;
+
+    var uid = msg.uid;
+    var list;
+
+    var SQLGetSelfTops = function()
+    {
+
+        var sql = 'SELECT COUNT(*)+1 AS pos FROM escape WHERE score>(SELECT score FROM escape WHERE uid='+uid+')';
+        self.conn.query(sql,
+            function(err, rows, fields) {
+                if (err) throw err;
+
+                next(null,{code:200,rows:list,pos:rows[0]['pos']});
+                self.conn.end();
+            }
+        );
+    };
+
+    var SQLGetTops = function()
+    {
+
+        var sql = 'SELECT * FROM escape ORDER BY score DESC LIMIT 5';
+        self.conn.query(sql,
+            function(err, rows, fields) {
+                if (err) throw err;
+
+                list = rows;
+
+                SQLGetSelfTops();
+//                next(null,{code:200,rows:rows});
+//                self.conn.end();
+            }
+        );
+    };
+
+    this.conn.connect(function(error, results) {
+        if(error) {
+            console.log('Connection Error: ' + error.message);
+            self.conn.end();
+            return;
+        }
+        console.log('Connected to MySQL');
+
+        SQLGetTops();
+    });
+
+};
+
+GMySQL.prototype.setScore = function(msg,next) {
+
+    var self = this;
+    var score_new = msg.score;
+    var uid = msg.uid;
+
+    var SQLSetScore = function(score,insert)
+    {
+        var sql;
+        if (insert){
+            sql = 'INSERT INTO escape (uid,score) VALUES ('+uid+','+score+')';
+        }else{
+            sql = 'UPDATE escape SET score='+score+' WHERE uid='+uid;
+        }
+
+        self.conn.query(sql,
+            function(err, rows, fields) {
+                if (err) throw err;
+
+                next(null, {code: 200,update:true});
+                self.conn.end();
+            });
+    };
+
+    var SQLGetScore = function()
+    {
+
+        var sql = 'SELECT score FROM escape WHERE uid='+uid;
+        self.conn.query(sql,
+            function(err, rows, fields) {
+                if (err) throw err;
+
+                if (rows.length==1){
+                    if (rows[0]['score']<score_new){
+                        SQLSetScore(score_new,false);
+                    }else{
+                        self.conn.end();
+                        next(null, {code: 200,update:false});
+                    }
+                }else{
+                    SQLSetScore(score_new,true);
+                }
+            }
+        );
+    };
+
+    this.conn.connect(function(error, results) {
+        if(error) {
+            console.log('Connection Error: ' + error.message);
+            self.conn.end();
+            return;
+        }
+        console.log('Connected to MySQL');
+
+        SQLGetScore();
+    });
+
+};

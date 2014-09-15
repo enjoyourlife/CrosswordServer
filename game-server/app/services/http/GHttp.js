@@ -45,6 +45,7 @@ var conf = {
 };
 
 var http = require('http');
+var https = require('https');
 var url=require('url');
 var fs=require('fs');
 var path=require('path');
@@ -234,6 +235,68 @@ exports.createServer = function(port){
 
             realPath = path.join(conf.Root, "crossword.zip" );
             reqHttpHandle(realPath,request, response);
+
+        }else if (fname=='payment'){
+
+            var postData = "";
+
+            request.addListener("data", function (postDataChunk) {
+                postData += postDataChunk;
+            });
+
+            request.addListener("end", function () {
+                console.log('数据接收完毕');
+                var params = querystring.parse(postData);//GET & POST  ////解释表单数据部分{name="zzl",email="zzl@sina.com"}
+                console.log(params);
+
+
+                /*
+                 var b = new Buffer('JavaScript');
+                 var s = b.toString('base64');
+                 // SmF2YVNjcmlwdA==
+
+                 var b = new Buffer('SmF2YVNjcmlwdA==', 'base64')
+                 var s = b.toString();
+                 // JavaScript
+                 */
+
+                var options = {
+                    hostname: 'sandbox.itunes.apple.com',
+                    port: 443,
+                    path: '/verifyReceipt',
+                    method: 'POST'
+                };
+                // base64
+                var b = new Buffer('JavaScript');
+                var s = b.toString('base64');
+                // end
+                var data=querystring.stringify({"receipt-data":s});
+                var req = https.request(options, function(res) {
+                    console.log('STATUS: ' + res.statusCode);
+                    console.log('HEADERS: ' + JSON.stringify(res.headers));
+                    res.setEncoding('utf8');
+                    res.on('data', function (chunk) {
+                        console.log('BODY: ' + chunk);
+
+                        response.write(chunk);
+                        response.end();
+
+                    });
+                });
+
+                req.on('error', function(e) {
+                    console.log('problem with request: ' + e.message);
+                });
+
+                console.log('data: ' + data);
+                req.write(data);
+                req.end();
+
+
+            });
+
+
+
 
         }else{
 

@@ -94,7 +94,9 @@ GUser.prototype.initChess = function(chess){
             this.aichess[b] = tmp;
         }
     }
-
+    // giveup one or two.
+    this.aichess.pop();
+    this.aichess.pop();
 };
 
 GUser.prototype.setChessByPos = function(pos){
@@ -224,6 +226,7 @@ var GRoom = function(app,channel,xcid){
     this.usr_cnt = 0;
     this.time_cnt = 0;
     this.chess = null;
+    this.ai_stop = false;
     this.config = app.get('GConfig');
 
     this.xcid.time = this.config.getById(this.xcid.level,'levels','time');
@@ -245,12 +248,16 @@ GRoom.prototype.useItem = function(uid,iid,gold,arg){
             break;
         case 4:
         {
-            this.time_cnt -= arg;
+            var tcnt =this.time_cnt - arg;
+            if (tcnt<0){
+                tcnt = 0;
+            }
+            this.time_cnt = tcnt;
         }
             break;
         case 5:
         {
-
+            this.stopAITime();
         }
             break;
     }
@@ -474,6 +481,28 @@ GRoom.prototype.pushMessage = function(route, msg, opts, cb) {
     this.channel.pushMessage(route,msg,opts,cb);
 };
 
+GRoom.prototype.isEmptyChess = function(i) {
+    if (this.xcid.type == 2) {
+        var users = this.users;
+        var usrA = users[0];
+        var usrB = users[1];
+        var isA = (usrA != null) && usrA.chess[i] == 0;
+        var isB = (usrB != null) && usrB.chess[i] == 0;
+        return (isA && isB);
+    }else{
+        return true;
+    }
+};
+
+GRoom.prototype.stopAITime = function() {
+    var tcnt = this.config.getById(5,'items','arg');
+    this.ai_stop = true;
+    setTimeout(
+        function(){
+            this.ai_stop = false;
+        },tcnt*1000);
+};
+
 GRoom.prototype.startAITime = function() {
     var self = this;
     var min = this.config.getById(0,'ai','min');
@@ -481,9 +510,20 @@ GRoom.prototype.startAITime = function() {
     this.aiid = setTimeout(
         function(){
             var user = self.getUser(0);
-            if (!!user){
-                var val = user.getAIChess();
-                self.setUser(0,'game',val);
+            if (!!user && !this.ai_stop){
+
+                var val;
+                while(true){
+                    val = user.getAIChess();
+                    if (val == null){
+                        break;
+                    }
+                    if (this.isEmptyChess(val)){
+                        self.setUser(0,'game',val);
+                        break;
+                    }
+                }
+
                 console.log('startAITime ...'+val);
             }
 
@@ -493,6 +533,7 @@ GRoom.prototype.startAITime = function() {
 
         },GUtils.randInt(min,max)*1000);
 };
+
 GRoom.prototype.startTime = function() {
     var self = this;
     this.time_cnt = 0;
@@ -528,6 +569,9 @@ GRoom.prototype.autoStart = function() {
     var self = this;
 
     this.door = GCODE.ROOM.G_ROOM_READY;
+
+    this.ai_stop = false;
+
     var param = {
         route: 'onGameReady',
         cid: self.xcid

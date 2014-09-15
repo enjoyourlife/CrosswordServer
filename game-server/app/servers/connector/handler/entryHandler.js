@@ -80,7 +80,9 @@ Handler.prototype.register = function(msg, session, next) {
     var sex = msg.sex;
     var nick = msg.nick;
 
-    if (!usr || !pwd || !sex || !nick){
+    console.log('register:'+usr+'/'+pwd+'/'+sex+'/'+nick);
+
+    if (!usr || !pwd || sex==null || !nick){
         next(null, {code: 500,eid: 401});
         return;
     }
@@ -146,10 +148,20 @@ Handler.prototype.login = function(msg, session, next) {
     var pwd = msg.pwd;
     var gid = msg.gid;
 
+    var verify = true;
+    if (gid=='escape' || gid=='killer'){
+        pwd = 'password';
+        verify = false;
+    }else{
+
+    }
+
     if (!usr || !pwd || !gid){
         next(null, {code: 500});
         return;
     }
+
+
 
     var SQLLoginUser = function()
     {
@@ -158,7 +170,7 @@ Handler.prototype.login = function(msg, session, next) {
             function(err, rows, fields) {
                 if (err) throw err;
 
-                if (rows.length==1){
+                if (rows.length>=1){
 
                     var uid = rows[0]['uid'];
                     var info = rows[0];
@@ -169,9 +181,16 @@ Handler.prototype.login = function(msg, session, next) {
 //                    delete info.password;
 
                     self.dologin(uid,info,msg,session,next);
-
+                }else if (!verify){
+                    msg.sex = 0;
+                    msg.nick = 'nick';
+                    msg.pwd = 'password';
+                    self.register(msg, session, next);
+//                    self.dologin(uid,info,msg,session,next);
+//                    next(null, {code: 500,msg: 'Login ! verify Failed'});
                 }else{
-                    next(null, {code: 500,msg: 'Login Failed��'});
+
+                    next(null, {code: 500,msg: 'Login Failed'});
                 }
 
                 mysql.conn.end();
@@ -260,8 +279,37 @@ Handler.prototype.getinfo = function(msg, session, next) {
     console.log('uid:'+uid+ ' and gid:'+gid);
 
     var mysql = new GMySQL();
-
     mysql.info({uid:uid,gid:gid},next);
+};
+
+Handler.prototype.setScore = function(msg, session, next) {
+
+    var gid = session.get('gid');
+    var uid = session.get('uid');
+
+    var score = msg.score;
+
+    if (!uid || !gid){
+        next(null, {code: 500});
+        return;
+    }
+
+    var mysql = new GMySQL();
+    mysql.setScore({uid:uid,gid:gid,score:score},next);
+};
+
+Handler.prototype.getTops = function(msg, session, next) {
+
+    var gid = session.get('gid');
+    var uid = session.get('uid');
+
+    if (!uid || !gid){
+        next(null, {code: 500});
+        return;
+    }
+
+    var mysql = new GMySQL();
+    mysql.getTops({uid:uid,gid:gid},next);
 };
 
 Handler.prototype.enter = function(msg, session, next) {
