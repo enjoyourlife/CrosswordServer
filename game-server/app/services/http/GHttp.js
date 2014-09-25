@@ -295,7 +295,23 @@ exports.createServer = function(port){
 
             });
 
-        }else if (fname=='pay_baidu'){
+        }else if (fname=='paybaidu'){
+
+/*
+ { transdata: '{"exorderno":"1411295926049",
+ "transid":"06514092118384853651",
+ "waresid":1,
+ "appid":"1137915",
+ "feetype":0,
+ "money":1,
+ "count":1,
+ "result":0,
+ "transtype":0,
+ "transtime":"2014-09-21 18:45:22",
+ "cpprivate":"gamepans",
+ "paytype":5}',
+ sign: '253b742ec7a41b987d48b2551772b403' }
+ */
 
             var postData = "";
 
@@ -305,11 +321,15 @@ exports.createServer = function(port){
 
             request.addListener("end", function () {
                 console.log('recv finish.');
-                var params = eval("(" + postData + ")");//GET & POST  ////解释表单数据部分{name="zzl",email="zzl@sina.com"}
+                var params = querystring.parse(postData);
+//                var params = eval("(" + postData + ")");
                 console.log(params);
 
                 var transdata = eval("(" + params.transdata + ")");
 
+                var mysql = new GMySQL();
+                mysql.setPayment({result:100,transdata:transdata},
+                    function(err,msg){});
 
             });
 

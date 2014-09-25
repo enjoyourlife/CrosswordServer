@@ -28,13 +28,28 @@ var GMySQL = function() {
 
 module.exports = GMySQL;
 
+GMySQL.prototype.End = function() {
+
+    this.conn.end(function(err) {
+        if (err){
+            if (err.errno != 'ECONNRESET') {
+                throw err;
+            } else {
+                // do nothing
+            }
+        }
+    });
+
+};
+
 GMySQL.prototype.Connect = function(cb,next) {
 
+    var self = this;
     this.conn.connect(function(err, results) {
 
         if(err) {
             console.log('Connection Error: ' + err.message);
-            this.conn.end();
+            self.End();
             if (next!=null){
                 next(null, {code: 500,eid: 501});
             }
@@ -86,7 +101,7 @@ GMySQL.prototype.info = function(msg,next) {
             }else{
                 next(null, {code: 200});
             }
-            self.conn.end();
+            self.End();
 
         });
 
@@ -147,7 +162,7 @@ GMySQL.prototype.pay = function(msg,next) {
         self.Query(sql,function(rows){
 
             next(null, {code: 200});
-            self.conn.end();
+            self.End();
 
         });
 
@@ -182,7 +197,7 @@ GMySQL.prototype.pay = function(msg,next) {
                 SQLAddMoney(rows[0]['uid'],rows[0]['gold']);
             }else{
                 next(null, {code: 500,msg: 'Register Failed��'});
-                self.conn.end();
+                self.End();
             }
 
         });
@@ -231,7 +246,7 @@ GMySQL.prototype.use = function(uid,iid,val,arg,next,cb) {
 
             cb((gold-val));
             next(null, {code: 200,uid:uid,iid:iid,gold:(gold-val),arg:arg});
-            self.conn.end();
+            self.End();
 
         });
         /*
@@ -265,11 +280,11 @@ GMySQL.prototype.use = function(uid,iid,val,arg,next,cb) {
                     SQLUseMoney(gold);
                 }else{
                     next(null, {code: 500,gold:gold,eid:1,msg: 'Register A Failed��'});
-                    self.conn.end();
+                    self.End();
                 }
             }else{
                 next(null, {code: 500,gold:0,eid:1,msg: 'Register B Failed��'});
-                self.conn.end();
+                self.End();
             }
 
         });
@@ -327,7 +342,7 @@ GMySQL.prototype.reward = function(uid,gold_val,exp_val,next) {
 
         self.Query(sql,function(rows){
             next(null, {code: 200});
-            self.conn.end();
+            self.End();
         });
 
         /*
@@ -408,6 +423,8 @@ GMySQL.prototype.getWords = function(next) {
                 next(null,words);
             }
 
+            self.End();
+
         });
 
         /*
@@ -462,7 +479,7 @@ GMySQL.prototype.getTops = function(msg,next) {
         self.Query(sql,function(rows){
 
             next(null,{code:200,rows:list,pos:rows[0]['pos']});
-            self.conn.end();
+            self.End();
 
         });
 
@@ -539,7 +556,7 @@ GMySQL.prototype.setScore = function(msg,next) {
         self.Query(sql,function(rows){
 
             next(null, {code: 200,update:true});
-            self.conn.end();
+            self.End();
 
         });
 
@@ -565,8 +582,8 @@ GMySQL.prototype.setScore = function(msg,next) {
                 if (rows[0]['score']<score_new){
                     SQLSetScore(score_new,false);
                 }else{
-                    self.conn.end();
                     next(null, {code: 200,update:false});
+                    self.End();
                 }
             }else{
                 SQLSetScore(score_new,true);
@@ -608,5 +625,84 @@ GMySQL.prototype.setScore = function(msg,next) {
         SQLGetScore();
     });
     */
+
+};
+
+GMySQL.prototype.setPayment = function(msg,next) {
+
+    var transdata = msg.transdata;
+
+/*
+    result >>
+    100：来自支付方，仅当查询为空时插入。表示接受且未生效。
+    101：来自客户端，表示使用请求，仅当查询为100时修改结果。表示已生效。
+    0：仅查询。
+*/
+
+    var result = msg.result;
+
+    if (transdata == null ||
+        transdata.plat ==null ||
+        transdata.transid == null){
+
+        next(null,{code:500});
+        return;
+    }
+
+    var where = "WHERE plat="+transdata.plat+" AND transid="+transdata.transid;
+
+    var SQLSetPayment = function(insert) {
+
+        var sql;
+
+        if (insert) {
+            sql = 'INSERT INTO payment (appid,waresid,transid,orderno,plat,paytype,money,transtime,result) VALUES ('
+                + transdata.appid + ',' + transdata.waresid + ',' + transdata.transid + ','
+                + transdata.exorderno + ',' + transdata.plat + ',' + transdata.paytype + ','
+                + transdata.money+ ',' + transdata.transtime + ',' + result + ')';
+        } else {
+            sql = 'UPDATE payment SET result=' + result + ' ' + where;
+        }
+
+        self.Query(sql, function (rows) {
+
+            next(null, {code: 200,update:true});
+            self.End();
+
+        });
+
+    };
+
+    var SQLGetPayment = function(){
+
+        var sql = 'SELECT id,result FROM payment '+where;
+
+        self.Query(sql,function(rows){
+
+            if (rows.length==1){
+                if (result==101){
+                    if (rows['result']==100){
+                        SQLSetPayment(false);
+                    }else{
+                        next(null, {code: 500});
+                    }
+                }else{
+                    // result 100 or 0.查到。
+                    next(null, {code: 200});
+                }
+            }else{
+                if (result==100){
+                    SQLSetPayment(true);
+                }else{
+                    // result 101 or 0.查不到。
+                    next(null, {code: 500});
+                }
+            }
+
+        });
+
+    };
+
+    self.Connect(SQLGetPayment,next);
 
 };

@@ -103,7 +103,7 @@ Handler.prototype.register = function(msg, session, next) {
         mysql.Query(sql,function(rows){
 
             self.login(msg,session,next);
-            mysql.conn.end();
+            mysql.End();
 
         });
 
@@ -133,7 +133,7 @@ Handler.prototype.register = function(msg, session, next) {
 
             if (rows.length==1){
                 next(null, {code: 500,eid: 601,msg: 'Register Failed��'});
-                mysql.conn.end();
+                mysql.End();
             }else{
                 SQLInsertUser();
             }
@@ -229,8 +229,8 @@ Handler.prototype.login = function(msg, session, next) {
 
                 self.dologin(uid,info,msg,session,next);
             }else if (!verify){
-                msg.sex = 0;
-                msg.nick = 'nick';
+                msg.sex = 1;
+                msg.nick = msg.usr;
                 msg.pwd = 'password';
                 self.register(msg, session, next);
             }else{
@@ -238,7 +238,7 @@ Handler.prototype.login = function(msg, session, next) {
                 next(null, {code: 500,msg: 'Login Failed'});
             }
 
-            mysql.conn.end();
+            mysql.End();
 
         });
 
@@ -593,6 +593,7 @@ Handler.prototype.loginThird = function(msg, session, next) {
 
 
 Handler.prototype.loginBaidu = function(msg, session, next) {
+
     var self = this;
 
     var appid = msg.appid;
@@ -630,6 +631,58 @@ Handler.prototype.loginBaidu = function(msg, session, next) {
             var trans =  eval("(" + msg.transdata + ")");
             console.log("i am here~~~~~~~~");
             self.login({usr:trans.username,pwd:'password',gid:'crossword',plat:'baidu'},session,next);
+        });
+//    next(null, {code: 200});
+};
+
+Handler.prototype.vertifyPayBaidu = function(msg, session, next) {
+
+//    var self = this;
+
+    var appid = msg.appid;
+    var orderno = msg.orderno;
+    var appkey = msg.appkey;
+
+//    var token = msg.token;
+//    var plat = msg.plat;
+
+//    console.log("appid " + appid + "   " + appkey + "   " + token + "   " + plat);
+
+    if (!appid || !appkey || !orderno){
+        next(null, {code: 500});
+        return;
+    }
+
+    var host = "gameopen.baidu.com";
+    var port = 80;
+    var path = "/index.php";
+
+    var transdata = "{'appid':'" + appid + "','exorderno':'" + orderno + "'}";
+
+    var sign = GUtils.MD5(transdata + appkey);
+
+    var myData = "r=FromIapppayToUserAction&transdata=" + transdata + "&sign=" + sign;
+    console.log("myData is " + myData);
+
+    GHttp.postDataToServer(host, port, path, myData,
+        function(err,data){
+            if(err){
+                console.log(err);
+                next(null, {code: 500});
+                return;
+            }
+
+            //transdata={"userid":"2049653523","username":"GamePans"}&sign=20e529266ca5e660b980e538f1073a21
+
+
+            var msg = querystring.parse(data);
+            var trans =  eval("(" + msg.transdata + ")");
+
+            next(null, {code: 200,transdata:trans});
+
+//            self.login({usr:trans.username,pwd:'password',gid:'crossword',plat:'baidu'},session,next);
+
+
         });
 //    next(null, {code: 200});
 };
