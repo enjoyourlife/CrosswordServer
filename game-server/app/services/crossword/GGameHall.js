@@ -518,7 +518,7 @@ GRoom.prototype.startAITime = function() {
                     if (val == null){
                         break;
                     }
-                    if (this.isEmptyChess(val)){
+                    if (self.isEmptyChess(val)){
                         self.setUser(0,'game',val);
                         break;
                     }

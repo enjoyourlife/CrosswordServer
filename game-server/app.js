@@ -1,5 +1,5 @@
 var pomelo = require('pomelo');
-
+var mysql      = require('mysql');
 var GConfig = require('./app/services/utils/GConfig');
 
 /**

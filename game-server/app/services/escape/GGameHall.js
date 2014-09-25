@@ -141,7 +141,7 @@ GRoom.prototype.autoStart = function() {
     var self = this;
 
     var param = {
-        route: 'onGameReady',
+        route: 'onUserReady',
         distance: this.distance
     };
     self.pushMessage(param);

@@ -245,7 +245,7 @@ exports.createServer = function(port){
             });
 
             request.addListener("end", function () {
-                console.log('数据接收完毕');
+                console.log('recv finish.');
                 var params = querystring.parse(postData);//GET & POST  ////解释表单数据部分{name="zzl",email="zzl@sina.com"}
                 console.log(params);
 
@@ -295,8 +295,23 @@ exports.createServer = function(port){
 
             });
 
+        }else if (fname=='pay_baidu'){
+
+            var postData = "";
+
+            request.addListener("data", function (postDataChunk) {
+                postData += postDataChunk;
+            });
+
+            request.addListener("end", function () {
+                console.log('recv finish.');
+                var params = eval("(" + postData + ")");//GET & POST  ////解释表单数据部分{name="zzl",email="zzl@sina.com"}
+                console.log(params);
+
+                var transdata = eval("(" + params.transdata + ")");
 
 
+            });
 
         }else{
 
@@ -311,4 +326,49 @@ exports.createServer = function(port){
 
     console.log('HTTP Server running at http://localhost:%d/',port);
 };
+
+exports.postDataToServer = function(host, port, path, myData, cb){
+    var options = {
+        host : host,
+        port : port,
+        path : path,
+        method : 'post',
+        headers : {
+            'Content-Type' : 'application/x-www-form-urlencoded',
+            'Content-Length' : myData.length
+        }
+    };
+
+    //使用http 发送
+    var req = http.request(options, function(res) {
+        console.log('STATUS: ' + res.statusCode);
+        console.log('HEADERS: ' + JSON.stringify(res.headers));
+        // 设置字符编码
+        res.setEncoding('utf8');
+        // 返回数据流
+        var _data = "";
+        // 数据
+        res.on('data', function(chunk) {
+            _data += chunk;
+            console.log('BODY: ' + chunk);
+        });
+        // 结束回调
+        res.on('end', function() {
+            console.log("REBOAK:", _data);
+            //next(null, {code: 200});
+            cb(null,_data);
+        });
+        // 错误回调 // 这个必须有。 不然会有不少 麻烦
+        req.on('error', function(e) {
+            console.log('problem with request: ' + e.message);
+            //next(null, {code: 500});
+            cb("error");
+        });
+    });
+
+    req.write(myData + "\n");
+    req.end();
+
+};
+
 

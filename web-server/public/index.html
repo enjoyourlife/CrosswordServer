@@ -18,6 +18,8 @@
     </script> 
     <script type="text/javascript">
       var pomelo = window.pomelo;
+//      var host = "111.206.45.12";
+//      var port = "30238";
       var host = "127.0.0.1";
       var port = "3010";
       // window.location.hostname
@@ -65,6 +67,37 @@
               nick: 'mike',
               sex: 1,
               gid: 'crossword'
+          }, function(data) {
+              console.log(data);
+          });
+
+      }
+
+      function login() {
+
+          pomelo.request("connector.entryHandler.login", {
+              usr: 'userXXX',
+              gid: 'escape'
+          }, function(data) {
+              console.log(data);
+          });
+
+      }
+
+      function setScore() {
+
+          pomelo.request("connector.entryHandler.setScore", {
+              score: 35
+          }, function(data) {
+              console.log(data);
+          });
+
+      }
+
+      function getTops() {
+
+          pomelo.request("connector.entryHandler.getTops", {
+
           }, function(data) {
               console.log(data);
           });
@@ -353,6 +386,17 @@
         <div class="g-button">
             <input id="test" type="button" value="Reg Game Server" onclick="register()"/>
         </div>
+
+        <div class="g-button">
+            <input id="test" type="button" value="Login Game Server" onclick="login()"/>
+        </div>
+        <div class="g-button">
+            <input id="test" type="button" value="setScore" onclick="setScore()"/>
+        </div>
+        <div class="g-button">
+            <input id="test" type="button" value="getTops" onclick="getTops()"/>
+        </div>
+
       <div class="g-button">
         <input id="test" type="button" value="Login A Game Server" onclick="loginA()"/>
       </div>

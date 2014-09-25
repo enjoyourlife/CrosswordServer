@@ -5,11 +5,11 @@
 var GUtils = require('../utils/GUtils');
 var GCODE = {
     ROOM: {
-        USER_MIN:  3,
-        USER_MAX:  6,
+        USER_MIN:  8,
+        USER_MAX:  16,
 
         G_ROOM_OPEN:    5001,
-        G_ROOM_FULL:   5002,
+//        G_ROOM_FULL:   5002,
         G_ROOM_GAME:    5003
     },
     GAME: {
@@ -27,12 +27,18 @@ var GCODE = {
         FUNC_FIGHT:		0x00010001,	//辩论
         FUNC_KILL:		0x00020101,	//击杀
         FUNC_POLICE:	0x00020201	//验人
+    },
+    BUFF: {
+        BUFFER_MURDER:  0x00010000,
+        BUFFER_CHECK:   0x00020000
     }
 
 };
+
+// GCODE.RTYPE.
 var c_nRole_V1 = [
-    GCODE.RTYPE.ROLE_KILLER,GCODE.RTYPE.ROLE_POLICE,GCODE.RTYPE.ROLE_CIVILIAN,GCODE.RTYPE.ROLE_KILLER,GCODE.RTYPE.ROLE_POLICE,
-    GCODE.RTYPE.ROLE_CIVILIAN,GCODE.RTYPE.ROLE_CIVILIAN,GCODE.RTYPE.ROLE_CIVILIAN,GCODE.RTYPE.ROLE_CIVILIAN,GCODE.RTYPE.ROLE_CIVILIAN,
+    GCODE.RTYPE.ROLE_KILLER,GCODE.RTYPE.ROLE_POLICE,GCODE.RTYPE.ROLE_CIVILIAN,GCODE.RTYPE.ROLE_CIVILIAN,GCODE.RTYPE.ROLE_CIVILIAN,
+    GCODE.RTYPE.ROLE_KILLER,GCODE.RTYPE.ROLE_POLICE,GCODE.RTYPE.ROLE_CIVILIAN,GCODE.RTYPE.ROLE_CIVILIAN,GCODE.RTYPE.ROLE_CIVILIAN,
     GCODE.RTYPE.ROLE_KILLER,GCODE.RTYPE.ROLE_POLICE,GCODE.RTYPE.ROLE_CIVILIAN,GCODE.RTYPE.ROLE_CIVILIAN,GCODE.RTYPE.ROLE_KILLER,
     GCODE.RTYPE.ROLE_POLICE];
 
@@ -44,12 +50,15 @@ var GUser = function(idx){
 GUser.prototype.init = function(uid){
     this.reset();
 
+    this.enable = true;
 
     this.uid = uid;
     this.dat = {};
 
     this.ins=null;
     this.master=false;
+
+    this.on_net=true;
 };
 
 GUser.prototype.fini = function(){
@@ -59,6 +68,7 @@ GUser.prototype.fini = function(){
 
     this.ins=null;
     this.master=false;
+    this.on_net=false;
 };
 
 GUser.prototype.reset = function(){
@@ -68,7 +78,52 @@ GUser.prototype.reset = function(){
     this.ready=false;
 
     this.check=false;
-    this.enable=true;
+    this.enable=false;
+    this.lastws=false;
+    this.rand=0.0;
+
+    this.rtype=GCODE.RTYPE.ROLE_ALL;
+};
+
+GUser.prototype.offline = function(){
+
+    this.on_net=false;
+    this.master=false;
+//    this.reset();
+//
+//    this.uid=null;
+//
+//    this.ins=null;
+//    this.master=false;
+};
+
+GUser.prototype.endState = function(){
+    this.tid=null;
+};
+
+GUser.prototype.finiGame = function(){
+
+    if (this.on_net==false){
+        this.fini();
+    }else if (this.uid != null){
+        this.enable = true;
+        this.lastws = false;
+    }
+    this.tid=null;
+    this.dat=null;
+    this.ready=false;
+
+
+};
+
+GUser.prototype.initGame = function(){
+
+    this.tid=null;
+    this.dat=null;
+    this.ready=false;
+
+    this.check=false;
+//    this.enable=true;
     this.rand=0.0;
 
     this.rtype=GCODE.RTYPE.ROLE_ALL;
@@ -81,6 +136,9 @@ GUser.prototype.toRType = function(rtype){
     }
     if (GCODE.RTYPE.ROLE_POLICE==rtype && this.check){
         to_rtype = this.rtype;
+    }
+    if (rtype==GCODE.RTYPE.ROLE_CIVILIAN){
+        to_rtype = GCODE.RTYPE.ROLE_ALL;
     }
     return to_rtype;
 };
@@ -105,9 +163,22 @@ var GRoom = function(cid){
     this.state = GCODE.GAME.STAT_RESET;
     this.tid = null;
     this.usr_cnt = 0;
+    this.player_cnt = 0;
     this.groups = {};
 
+    this.hasDone = {};
 //    this.randRoles();
+};
+
+GRoom.prototype.canInto = function(){
+    var result = true;
+    if (this.door == GCODE.ROOM.G_ROOM_GAME){
+        result = false;
+    }
+    if (this.getUserCount() == GCODE.ROOM.USER_MAX){
+        result = false;
+    }
+    return result;
 };
 
 GRoom.prototype.getUsersByRType = function(rtype){
@@ -133,27 +204,38 @@ GRoom.prototype.isOpen = function(){
     return (this.door == GCODE.ROOM.G_ROOM_OPEN);
 };
 
+GRoom.prototype.isInGame = function(){
+    return (this.door == GCODE.ROOM.G_ROOM_GAME);
+};
+
 GRoom.prototype.getUserCount = function(){
     return this.usr_cnt;
+};
+
+GRoom.prototype.getPlayerCount = function(){
+    return this.player_cnt;
 };
 
 GRoom.prototype.masterUser = function(){
     var master = false;
 
     var users = this.users;
+    // 查找房主
     for (var i = 0 , len = users.length ; i < len ; ++ i){
         var user = users[i];
-        if (!!user.uid && user.master){
+        if (user.uid != null && user.on_net && user.master){
             master = true;
             break;
         }
     }
 
     if (!master){
+        // 设定房主
         for (var i = 0 , len = users.length ; i < len ; ++ i){
             var user = users[i];
-            if (!!user.uid && !user.master){
+            if (user.uid != null && user.on_net && !user.master){
                 user.master = true;
+                user.ready = false;
                 break;
             }
         }
@@ -162,62 +244,106 @@ GRoom.prototype.masterUser = function(){
 };
 
 GRoom.prototype.addUser = function(uid,sid,cb){
+
     this.channel.add(uid,sid);
     var users = this.users;
     var user_get;
     for (var i = 0 , len = users.length ; i < len ; ++ i){
         var user = users[i];
-        if (!user.uid){
+        if (user.uid==null){
             user.init(uid);
             user.ins = this.randIns();
             user_get = user;
             this.usr_cnt ++;
+            this.player_cnt ++;
             break;
         }
     }
 
     this.masterUser();
 
-    cb(null,this.cid,this.users,user_get);
+    var users_get = this.getUsers(false);
+
+    cb(null,this.cid,users_get,user_get);
 
     var param = {
         route: 'onUserEnter',
-        users: users,
+        users: users_get,
         user: user_get,
         cid:this.cid
     };
     this.pushMessage(param);
 
-    if (this.getUserCount()>=GCODE.ROOM.USER_MAX){
-        this.door = GCODE.ROOM.G_ROOM_FULL;
-    }
+//    if (this.getUserCount()>=GCODE.ROOM.USER_MAX){
+//        this.door = GCODE.ROOM.G_ROOM_FULL;
+//    }
 
     return user_get;
 };
 
-GRoom.prototype.delUser = function(uid,sid){
+GRoom.prototype.initClient = function(uid){
 
-    this.channel.leave(uid,sid);
-    var user = this.getUser(uid);
-    if (!!user){
-        user.fini();
+    var user_get = this.getUser(uid);
+    var users_get = this.getUsers(false);
 
-        this.usr_cnt --;
-    }
-
-    this.masterUser();
-
-    var users = this.users;
     var param = {
-        route: 'onUserExit',
-        users: users,
-        uid: uid,
-        channel:this.cid
+        route: 'onUserEnter',
+        users: users_get,
+        user: user_get,
+        cid:this.cid
     };
     this.pushMessage(param);
+};
+
+GRoom.prototype.delUser = function(uid,sid){
+
+    if (this.isInGame()){
+
+        this.channel.leave(uid,sid);
+        var user = this.getUser(uid);
+        if (!!user){
+            user.offline();
+
+            this.player_cnt --;
+        }
+
+        this.masterUser();
+
+        var users_get = this.getUsers(false);
+        var param = {
+            route: 'onUserExit',
+            users: users_get,
+            uid: uid,
+            channel:this.cid
+        };
+        this.pushMessage(param);
+
+    }else{
+
+        this.channel.leave(uid,sid);
+        var user = this.getUser(uid);
+        if (!!user){
+            user.fini();
+            this.usr_cnt --;
+            this.player_cnt --;
+        }
+
+        this.masterUser();
+
+        var users_get = this.getUsers(false);
+        var param = {
+            route: 'onUserExit',
+            users: users_get,
+            uid: uid,
+            channel:this.cid
+        };
+        this.pushMessage(param);
+
+    }
+
 
     // 这是小型房间的设定。
-    if (this.getUserCount()==0 && !this.isOpen()){
+    if (this.getPlayerCount()==0 && this.isInGame()){
         this.stopGame();
     }
 };
@@ -238,47 +364,144 @@ GRoom.prototype.getUser = function(uid){
     return user_get;
 };
 
-GRoom.prototype.setCursor = function(uid,tid){
-    var result = false;
-    switch(this.state){
-        case GCODE.GAME.STAT_RESET:
-            break;
-        case GCODE.GAME.STAT_NIGHT:
-        {
-            var user = this.getUser(uid);
-            if (user.rtype==GCODE.RTYPE.ROLE_KILLER ||
-                user.rtype==GCODE.RTYPE.ROLE_POLICE){
-
-                user.tid = tid;
-//                console.log('GRoom.prototype.setCursor !!!!!');
-//                console.log(this.groups[user.rtype]);
-                this.pushMessageByUids('onUserCursor',
-                    {user:user,fid:user.idx,tid:tid},
-                    this.groups[user.rtype]);
-
-                result = true;
-            }
+GRoom.prototype.getUsers = function(all){
+    var sdata = [];
+    var users = this.users;
+    for (var i = 0 , len = users.length ; i < len ; ++ i){
+        var usr = users[i];
+        var item = {idx:usr.idx,uid:usr.uid,ins:usr.ins,
+            master:usr.master,ready:usr.ready,enable:usr.enable,
+            offline:!usr.on_net};
+        if (usr.enable==false || all==true){
+            item.rtype = usr.rtype;
         }
-            break;
-        case GCODE.GAME.STAT_FIGHT:
-        {
-            var user = this.getUser(uid);
-            user.tid = tid;
-            var param = {
-                route: 'onUserCursor',
-                user:user,
-                fid:user.idx,
-                tid:tid
-            };
-            this.pushMessage(param);
+        sdata.push(item);
+    }
+    return sdata;
+};
 
-            result = true;
+GRoom.prototype.tryTarget = function(rtype,tid){
+
+    if (this.hintTarget(rtype)){
+        this.hasDone[rtype] = true;
+        // 发消息，可能是全体或职业
+        if (rtype==GCODE.RTYPE.ROLE_KILLER){
+            this.pushMessage('onUserTarget',
+                {tid:tid,rtype:rtype,
+                    buff:GCODE.BUFF.BUFFER_MURDER});
+        }else if (rtype==GCODE.RTYPE.ROLE_POLICE){
+            var user = this.users[tid];
+            user.check = true;
+            var check = (user.rtype == GCODE.RTYPE.ROLE_KILLER);
+            this.pushMessageByUids('onUserTarget',
+                {tid:tid,rtype:rtype,check:check,
+                    buff:GCODE.BUFF.BUFFER_CHECK},
+                this.groups[rtype]);
         }
-            break;
-        default:
-            break;
     }
 
+};
+
+GRoom.prototype.calTargetNum = function(rtype){
+    var result = [];
+    var users = this.users;
+    for (var i = 0 , len = users.length ; i < len ; ++ i){
+        result.push(0);
+    }
+    for (var i = 0 , len = users.length ; i < len ; ++ i){
+        var usr = users[i];
+        if (usr!=null && usr.enable &&
+            (rtype==GCODE.RTYPE.ROLE_ALL || usr.rtype==rtype) &&
+            usr.tid!=null){
+            var tid = usr.tid;
+            result[tid] ++;
+        }
+    }
+    return result;
+};
+
+GRoom.prototype.setCursor = function(uid,tid){
+
+    var result = false;
+    var user = this.getUser(uid);
+    var target = this.users[tid];
+    if (user.enable==true && target.enable==true){
+
+        switch(this.state){
+            case GCODE.GAME.STAT_RESET:
+                break;
+            case GCODE.GAME.STAT_NIGHT:
+            {
+
+                var rtype = user.rtype;
+                if (rtype==GCODE.RTYPE.ROLE_KILLER ||
+                    rtype==GCODE.RTYPE.ROLE_POLICE){
+
+                    // 警察不允许指自己人，但杀手可以杀自己。
+                    var skip = false;
+                    if (rtype==GCODE.RTYPE.ROLE_POLICE){
+                        if (target.rtype==rtype){
+                            skip = true;
+                        }else if (target.check==true){
+                            skip = true;
+                        }
+                    }
+
+                    if (!skip && this.hasDone[rtype]==false){
+
+                        if (user.tid==tid){
+                            user.tid = null;
+                        }else{
+                            user.tid = tid;
+                        }
+
+                        this.pushMessageByUids('onUserCursor',
+                            {user:user,fid:user.idx,
+                                tid:user.tid,nums:this.calTargetNum(rtype)},
+                            this.groups[rtype]);
+
+                        result = true;
+
+                        this.tryTarget(rtype,tid);
+
+                    }
+                }
+            }
+                break;
+            case GCODE.GAME.STAT_FIGHT:
+            {
+                // 白天不允许指自己
+                var skip = false;
+                if (user.idx == tid){
+                    skip = true;
+                }
+
+                if (!skip){
+
+                    if (user.tid==tid){
+                        user.tid = null;
+                    }else{
+                        user.tid = tid;
+                    }
+
+                    var param = {
+                        route: 'onUserCursor',
+                        user:user,
+                        fid:user.idx,
+                        tid:user.tid,
+                        nums:this.calTargetNum(GCODE.RTYPE.ROLE_ALL)
+                    };
+                    this.pushMessage(param);
+
+                    result = true;
+                }
+
+            }
+                break;
+            default:
+                break;
+        }
+    }
     return result;
 }
 
@@ -323,7 +546,7 @@ GRoom.prototype.setReady = function(uid,ready) {
     var user = this.getUser(uid);
     if (!!user){
         if (user.master && ready){
-            if (this.getUserCount() >= GCODE.ROOM.USER_MIN){
+            if (this.getPlayerCount() >= GCODE.ROOM.USER_MIN){
 
                 var ready_cnt = 1;
                 var users = this.users;
@@ -334,7 +557,7 @@ GRoom.prototype.setReady = function(uid,ready) {
                     }
                 }
                 console.log("ready:%d",ready_cnt);
-                if (ready_cnt >= GCODE.ROOM.USER_MIN){
+                if (ready_cnt >= this.getPlayerCount()){
                     user.ready = ready;
 
                     var param = {
@@ -435,12 +658,32 @@ GRoom.prototype.randRoles = function() {
 
 GRoom.prototype.randRTypes = function() {
     var users = this.users;
+    var count = 0;
     for (var i = 0,len = users.length ; i < len ; ++ i)
     {
         var usr = users[i];
-        if (!!usr.uid){
-            usr.rtype = c_nRole_V1[i];
+        if (usr.uid!=null){
+            usr.rtype = c_nRole_V1[count];
             usr.rand = Math.random();
+            count ++;
+        }else{
+            usr.rtype = GCODE.RTYPE.ROLE_ALL;
+            usr.rand = 0.0;
+        }
+    }
+
+    // fix.
+    if (count == 11 || count == 15){
+
+        var xcnt = 0;
+        for (var i = 0,len = users.length ; i < len ; ++ i) {
+            var usr = users[i];
+            if (usr.uid != null) {
+                xcnt ++;
+                if (xcnt == 2){
+                    usr.rtype = GCODE.RTYPE.ROLE_POLICE;
+                }
+            }
         }
     }
 
@@ -474,6 +717,8 @@ GRoom.prototype.randRTypes = function() {
     this.groups[GCODE.RTYPE.ROLE_POLICE] = [];
     this.groups[GCODE.RTYPE.ROLE_KILLER] = [];
 
+
+
     for (var i = 0,len = users.length ; i < len ; ++ i)
     {
         var usr = users[i];
@@ -484,6 +729,18 @@ GRoom.prototype.randRTypes = function() {
     }
 
     console.log(this.groups);
+};
+
+GRoom.prototype.getCountInArray = function(array,item) {
+    var val;
+    var count = 0;
+    for (var i = 0,len = array.length; i < len ; ++ i){
+        val = array[i];
+        if (item==val){
+            count = count + 1;
+        }
+    }
+    return count;
 };
 
 GRoom.prototype.getMaxCountMember = function(array) {
@@ -522,8 +779,10 @@ GRoom.prototype.getTarget = function(rtype) {
     var tids = [];
     for (var i = 0,len = groups.length; i < len ; ++ i){
         var user = this.getUser(groups[i].uid);
-        if (!!user && user.tid!=null){
-            tids.push(user.tid);
+        if (user!=null && user.enable){
+            if (user.tid!=null){
+                tids.push(user.tid);
+            }
         }
     }
 
@@ -536,27 +795,75 @@ GRoom.prototype.getTarget = function(rtype) {
     return user_get;
 };
 
+GRoom.prototype.hintTarget = function(rtype) {
+
+    var groups = this.groups[rtype];
+    var tids = [];
+
+    var ucount = 0;
+    for (var i = 0,len = groups.length; i < len ; ++ i){
+        var user = this.getUser(groups[i].uid);
+        if (user!=null && user.enable){
+            if (user.on_net==true){
+                ucount ++;
+            }
+            if (user.tid!=null){
+                tids.push(user.tid);
+            }
+        }
+    }
+
+    var tid = this.getMaxCountMember(tids);
+
+    var tcount = this.getCountInArray(tids,tid);
+
+    var result = false;
+    if (tcount * 2 > ucount){
+        result = true;
+    }
+
+    return result;
+};
+
 GRoom.prototype.doKillerTarget = function() {
     console.log('doKillerTarget');
     var target = this.getTarget(GCODE.RTYPE.ROLE_KILLER);
     if (!!target){
         target.enable = false;
+        target.lastws = true;
         this.pushMessage('onUserUpdate',
             {event:GCODE.EVENT.FUNC_KILL,
                 user:target.getByRType(GCODE.RTYPE.ROLE_KILLER)});
     }
 };
-
+// 在过程中已确认，无需结束确认。
 GRoom.prototype.doPoliceTarget = function() {
     console.log('doPoliceTarget');
-    var target = this.getTarget(GCODE.RTYPE.ROLE_POLICE);
-    if (!!target){
-        target.check = true;
-        this.pushMessageByUids('onUserUpdate',
-            {event:GCODE.EVENT.FUNC_POLICE,
-                user:target.getByRType(GCODE.RTYPE.ROLE_POLICE)},
-            this.groups[GCODE.RTYPE.ROLE_POLICE]);
+    var rtype = GCODE.RTYPE.ROLE_POLICE;
+
+    if (this.hasDone[rtype]==false){
+        var target = this.getTarget(rtype);
+        if (!!target){
+            target.check = true;
+            var check = (target.rtype == GCODE.RTYPE.ROLE_KILLER);
+            this.pushMessageByUids('onUserTarget',
+                {tid:target.idx,rtype:rtype,check:check,
+                    buff:GCODE.BUFF.BUFFER_CHECK},
+                this.groups[rtype]);
+
+        }
+        /*
+        var target = this.getTarget(GCODE.RTYPE.ROLE_POLICE);
+        if (!!target){
+            target.check = true;
+            this.pushMessageByUids('onUserUpdate',
+                {event:GCODE.EVENT.FUNC_POLICE,
+                    user:target.getByRType(GCODE.RTYPE.ROLE_POLICE)},
+                this.groups[GCODE.RTYPE.ROLE_POLICE]);
+        }
+        */
     }
+
 };
 
 GRoom.prototype.doJudgeTarget = function() {
@@ -583,11 +890,28 @@ GRoom.prototype.getRoleCount = function(rtype) {
     return count;
 };
 
-GRoom.prototype.hintResult = function() {
-    var ret = 0;
+GRoom.prototype.getResult = function() {
+
+    var result;
+
     var killer_count = this.getRoleCount(GCODE.RTYPE.ROLE_KILLER);
     var police_count = this.getRoleCount(GCODE.RTYPE.ROLE_POLICE);
     var civizn_count = this.getRoleCount(GCODE.RTYPE.ROLE_CIVILIAN);
+
+    result = [civizn_count,police_count,killer_count];
+
+    return result;
+};
+
+GRoom.prototype.hintResult = function() {
+
+    var result = this.getResult();
+
+    var ret = 0;
+
+    var killer_count = result[2];
+    var police_count = result[1];
+    var civizn_count = result[0];
     if (killer_count == 0)
     {
         ret = 1;
@@ -600,13 +924,18 @@ GRoom.prototype.hintResult = function() {
         this.stopGame();
     }
 
-    console.log('hintResult >> %d %d %d',killer_count,police_count,civizn_count);
+//    console.log('hintResult >> %d %d %d',killer_count,police_count,civizn_count);
+//    result = [civizn_count,police_count,killer_count];
+
+//    return result;
 };
 
 GRoom.prototype.endGameState = function() {
+//    var result = this.getResult();
+    console.log('endGameState ... ');
     switch(this.state){
-        case GCODE.GAME.STAT_RESET:
-            break;
+//        case GCODE.GAME.STAT_RESET:
+//            break;
         case GCODE.GAME.STAT_NIGHT:
         {
             this.doKillerTarget();
@@ -628,9 +957,11 @@ GRoom.prototype.endGameState = function() {
     for (var i = 0,len = users.length ; i < len ; ++ i)
     {
         var usr = users[i];
-        console.log('usr tid '+i+':'+usr.tid);
-        usr.tid = null;
+        usr.endState();
     }
+    this.hasDone[GCODE.RTYPE.ROLE_POLICE] = false;
+    this.hasDone[GCODE.RTYPE.ROLE_KILLER] = false;
+//    return result;
 };
 
 GRoom.prototype.onGameState = function(state) {
@@ -641,24 +972,32 @@ GRoom.prototype.onGameState = function(state) {
         return;
     }
 
-    this.state = state;
-    var param = {
-        route: 'onGameState',
-        state: state
-    };
-    this.pushMessage(param);
-
+    var time = 30;
     switch(state)
     {
         case GCODE.GAME.STAT_NIGHT:
-            this.requireNextGameState(GCODE.GAME.STAT_FIGHT,20000);
+            this.requireNextGameState(GCODE.GAME.STAT_FIGHT,time*1000);
             break;
         case GCODE.GAME.STAT_FIGHT:
-            this.requireNextGameState(GCODE.GAME.STAT_NIGHT,20000);
+            this.requireNextGameState(GCODE.GAME.STAT_NIGHT,time*1000);
             break;
         default :
             break;
     }
+
+    var result = this.getResult();
+
+    this.state = state;
+    var param = {
+        route: 'onGameState',
+        state: state,
+        time: time,
+        users: this.getUsers(false),
+        result: result
+    };
+    this.pushMessage(param);
+
+    console.log('onGameState ... ');
 };
 
 GRoom.prototype.requireNextGameState = function(state,time) {
@@ -667,11 +1006,8 @@ GRoom.prototype.requireNextGameState = function(state,time) {
     if (time > 0){
         self.tid = setTimeout(
             function(){
-
-
-                self.onGameState(state);
-
                 self.tid = null;
+                self.onGameState(state);
             }
             ,time);
     }else{
@@ -683,7 +1019,15 @@ GRoom.prototype.requireNextGameState = function(state,time) {
 GRoom.prototype.startGame = function() {
 
     var self = this;
+
     self.door = GCODE.ROOM.G_ROOM_GAME;
+
+    var users = this.users;
+    for (var i = 0,len = users.length ; i < len ; ++ i)
+    {
+        var usr = users[i];
+        usr.initGame();
+    }
 
     self.randRTypes();
 
@@ -708,20 +1052,27 @@ GRoom.prototype.startGame = function() {
 GRoom.prototype.stopGame = function() {
     console.log('stopGame');
 
+    this.state = GCODE.GAME.STAT_RESET;
+
+    var result = this.getResult();
+
+    var param = {
+        route: 'onGameStop',
+        users:this.getUsers(true),
+        result: result
+    };
+    this.pushMessage(param);
+
     var users = this.users;
     for (var i = 0,len = users.length ; i < len ; ++ i)
     {
         var usr = users[i];
-        usr.reset();
+        usr.finiGame();
     }
+    this.usr_cnt = this.player_cnt;
 
-    var param = {
-        route: 'onGameStop',
-        users:this.users
-    };
-    this.pushMessage(param);
 
-    if (!!this.tid){
+    if (this.tid!=null){
         clearTimeout(this.tid);
         this.tid = null;
     }
@@ -730,9 +1081,77 @@ GRoom.prototype.stopGame = function() {
 //    this.door = GCODE.ROOM.G_ROOM_OPEN;
 
     if (this.getUserCount()>=GCODE.ROOM.USER_MAX){
-        this.door = GCODE.ROOM.G_ROOM_FULL;
+//        this.door = GCODE.ROOM.G_ROOM_FULL;
     }else{
         this.door = GCODE.ROOM.G_ROOM_OPEN;
+    }
+
+};
+
+GRoom.prototype.setChat = function(uid,chat) {
+
+    var user = this.getUser(uid);
+
+    if (user != null && this.state==GCODE.GAME.STAT_RESET){
+
+        var param = {
+            route: 'onUserChat',
+            user: user,
+            chat: chat,
+            last: false
+        };
+        this.pushMessage(param);
+
+        return;
+    }
+
+    if (user != null && user.enable){
+
+        switch(this.state)
+        {
+            case GCODE.GAME.STAT_NIGHT:
+            {
+                var rtype = user.rtype;
+                if (rtype==GCODE.RTYPE.ROLE_POLICE ||
+                    rtype==GCODE.RTYPE.ROLE_KILLER){
+
+                    this.pushMessageByUids('onUserChat',
+                        {user:user,chat: chat},
+                        this.groups[rtype]);
+
+                }
+            }
+                break;
+            case GCODE.GAME.STAT_FIGHT:
+            {
+                var param = {
+                    route: 'onUserChat',
+                    user: user,
+                    chat: chat,
+                    last: false
+                };
+                this.pushMessage(param);
+            }
+                break;
+            default :
+                break;
+        }
+
+        return;
+    }
+
+    if (user != null && !user.enable && user.lastws){
+
+        user.lastws = false;
+
+        var param = {
+            route: 'onUserChat',
+            user: user,
+            chat: chat,
+            last: true
+        };
+        this.pushMessage(param);
+
     }
 
 };
@@ -804,7 +1223,9 @@ GGameHall.prototype.getRoomList = function() {
     var list = [];
     for (var cid in rooms){
         room = rooms[cid];
-        list.push({cid:cid});
+        list.push({cid:cid,door:room.door,
+            count:room.getUserCount(),total:GCODE.ROOM.USER_MAX,
+            canin:room.canInto()});
     }
     return list;
 };
@@ -813,7 +1234,7 @@ GGameHall.prototype.getOpenRoom = function(cid) {
     var room_get;
     if (!!cid){
         var room = this.rooms[cid];
-        if (!!room && room.isOpen()){
+        if (!!room && room.canInto()){
             room_get = room.instance(this.app);
         }
     }

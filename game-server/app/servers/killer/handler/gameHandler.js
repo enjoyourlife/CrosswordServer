@@ -36,6 +36,21 @@ Handler.prototype.send = function(msg, session, next) {
 
 };
 
+Handler.prototype.init = function(msg, session, next) {
+    if (!session.uid){
+        return;
+    }
+
+    var cid = session.get('cid');
+    var uid = session.uid;
+    var room = this.gameHall.getRoomById(cid);
+    if (!!room){
+        room.initClient(uid);
+        next(null, {code:200});
+    }else{
+        next(null, {code:500});
+    }
+};
 
 Handler.prototype.cursor = function(msg, session, next) {
 
@@ -80,14 +95,8 @@ Handler.prototype.chat = function(msg, session, next) {
     var chat = msg.chat;
     var cid = session.get('cid');
     var room = this.gameHall.getRoomById(cid);
-
-    var user = room.getUser(session.uid);
-    var param = {
-        route: 'onGameChat',
-        user: user,
-        chat: chat
-    };
-    room.pushMessage(param);
-
+    if (!!room) {
+        room.setChat(session.uid, chat);
+    }
     next(null, {code:200});
 };
