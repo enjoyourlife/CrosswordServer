@@ -49,6 +49,12 @@ GameRemote.prototype.kick = function(uid, sid, cid , cb) {
     console.log('end GameRemote.prototype.kick ...');
 };
 
+GameRemote.prototype.GetHallChannel = function(){
+    var channelService = this.app.get('channelService');
+    var channel = channelService.getChannel('Hallcrossword', true);
+    return channel;
+}
+
 GameRemote.prototype.cfg = function(cb) {
     cb(null,this.gameConfig.config);
 };

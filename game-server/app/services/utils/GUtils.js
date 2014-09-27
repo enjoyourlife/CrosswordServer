@@ -6,6 +6,26 @@ var fs = require('fs');
 
 var GUtils = module.exports = {};
 
+GUtils.getTransData = function(data,plat){
+    var ret = {};
+    if (plat == 'baidu'){
+        ret.orderno = data.exorderno;
+        ret.transid = data.transid;
+        ret.waresid = data.waresid;
+        ret.appid = data.appid;
+        ret.feetype = data.feetype;
+        ret.money = data.money;
+        ret.count = data.count;
+        ret.result = data.result;
+        ret.transtype = data.transtype;
+        ret.transtime = data.transtime;
+        ret.paytype = data.paytype;
+        ret.plat = plat;
+    }
+
+    return ret;
+};
+
 GUtils.MD5 = function(content)
 {
     var crypto = require('crypto');

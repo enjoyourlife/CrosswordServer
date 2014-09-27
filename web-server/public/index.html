@@ -18,10 +18,10 @@
     </script> 
     <script type="text/javascript">
       var pomelo = window.pomelo;
-      var host = "111.206.45.12";
-      var port = "30238";
-//      var host = "127.0.0.1";
-//      var port = "3010";
+//      var host = "111.206.45.12";
+//      var port = "30238";
+      var host = "127.0.0.1";
+      var port = "3010";
       // window.location.hostname
       function gateConnect() {
       
@@ -53,23 +53,46 @@
           port: port,
           log: true
         }, function() {
+
+
         pomelo.request("connector.entryHandler.entry", "hello pomelo", function(data) {
             console.log(data);
           });
+
+//            pomelo.request("connector.entryHandler.notifyPayBaidu", {
+//                transdata: '{\"exorderno\":\"1411295926049\",\"transid\":\"06514092118384853651\",\"waresid\":1,\"appid\":\"1137915\",\"feetype\":0,\"money\":1,\"count\":1,\"result\":0,\"transtype\":0,\"transtime\":\"2014-09-21 18:45:22\",\"cpprivate\":\"gamepans\",\"paytype\":5}'
+//            }, function(data) {
+//                console.log(data);
+//            });
+
+//            pomelo.request("connector.entryHandler.vertifyPaysBaidu", {
+//
+//            }, function(data) {
+//                console.log(data);
+//            });
+
         });
       }
 
+
+
       function register() {
 
-          pomelo.request("connector.entryHandler.register", {
-              usr: 'userx',
-              pwd: 'pwd',
-              nick: 'mike',
-              sex: 1,
-              gid: 'crossword'
-          }, function(data) {
-              console.log(data);
-          });
+            pomelo.request("connector.entryHandler.vertifyPaysBaidu", {
+
+            }, function(data) {
+                console.log(data);
+            });
+
+//          pomelo.request("connector.entryHandler.register", {
+//              usr: 'userxx',
+//              pwd: 'pwd',
+//              nick: 'mike',
+//              sex: 1,
+//              gid: 'crossword'
+//          }, function(data) {
+//              console.log(data);
+//          });
 
       }
 
@@ -257,7 +280,14 @@
       }
       
     console.log('js log ... ');
-      
+
+
+      pomelo.on('onDoPayment', function(data) {
+          console.log('onDoPayment ... ');
+          console.log(data);
+      });
+
+
 	//wait message from the server.
 	pomelo.on('onUserChat', function(data) {
 		console.log('onUserChat ... ');

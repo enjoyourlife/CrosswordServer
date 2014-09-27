@@ -21,6 +21,13 @@ Handler.prototype.entry = function(msg, session, next) {
     next(null, {code: 200, err: GError.New(this.app,1000)});
 };
 
+
+Handler.prototype.GetHallChannel = function(gid){
+    var channelService = this.app.get('channelService');
+    var channel = channelService.getChannel('Hall'+gid, true);
+    return channel;
+}
+
 // ---------------------------------------------------- //
 Handler.prototype.dologin = function(uid, info, msg, session, next){
 
@@ -29,6 +36,7 @@ Handler.prototype.dologin = function(uid, info, msg, session, next){
     var gid = msg.gid;
 
     var rpc = self.app.rpc[gid];
+
     if (!!rpc){
 
         var uuid = GUtils.MD5(msg.usr);
@@ -39,10 +47,14 @@ Handler.prototype.dologin = function(uid, info, msg, session, next){
             sessionService.kick(uuid, 'kick', null);
         }
 
-        session.bind(uuid,null);
+        session.bind(uuid);
         session.on('closed', onUserLogout.bind(null, self.app));
 
-        rpc.gameRemote.cfg(session,function(err,cfg){
+        self.GetHallChannel(gid).add(uuid,self.app.get('serverId'));
+
+        rpc.gameRemote.cfg(session,
+
+            function(err,cfg){
 
             session.set('gid', gid);
             session.push('gid', function(err) {
@@ -65,6 +77,8 @@ Handler.prototype.dologin = function(uid, info, msg, session, next){
                 }
             });
 
+
+
             next(null, {code: 200,uuid:uuid,uid: uid,config:cfg,info:info});
         });
     }else{
@@ -86,6 +100,8 @@ Handler.prototype.register = function(msg, session, next) {
     var pwd = msg.pwd;
     var sex = msg.sex;
     var nick = msg.nick;
+    var userid = msg.userid;
+    var plat = msg.plat;
 
     console.log('register:'+usr+'/'+pwd+'/'+sex+'/'+nick);
 
@@ -98,7 +114,9 @@ Handler.prototype.register = function(msg, session, next) {
 
     var SQLInsertUser = function()
     {
-        var sql = 'INSERT INTO user (name, password,nick,sex,uuid) VALUES (\''+usr+'\', \''+pwd+'\',\''+nick+'\','+sex+',\'empty\')';
+        var sql = 'INSERT INTO user (name, password,nick,sex,uuid,plat) VALUES (\''+
+            usr+'\', \''+pwd+'\',\''+nick+'\','+sex+',\''+userid+'\',\''+plat+'\')';
+
 
         mysql.Query(sql,function(rows){
 
@@ -217,7 +235,7 @@ Handler.prototype.login = function(msg, session, next) {
 
         var sql = 'SELECT user.id as uid,user.name,user.nick,user.sex,'+gid+'.gold,'+gid+'.exp FROM user LEFT JOIN '+gid
             +' ON user.id='+gid+'.uid WHERE name=\''+usr+'\' AND password=\''+pwd+'\' LIMIT 0,30';
-
+//        console.log(sql);
         mysql.Query(sql,function(rows){
 
             if (rows.length>=1){
@@ -318,6 +336,13 @@ var onUserLogout = function(app, session) {
         return;
     }
 
+    console.log('onUserLogout');
+    var gid = session.get('gid');
+    var channelService = app.get('channelService');
+    var channel = channelService.getChannel('Hall'+gid, false);
+    if (channel){
+        channel.leave(session.uid,app.get('serverId'));
+    }
 };
 
 Handler.prototype.pay = function(msg, session, next) {
@@ -630,7 +655,7 @@ Handler.prototype.loginBaidu = function(msg, session, next) {
             var msg = querystring.parse(data);
             var trans =  eval("(" + msg.transdata + ")");
             console.log("i am here~~~~~~~~");
-            self.login({usr:trans.username,pwd:'password',gid:'crossword',plat:'baidu'},session,next);
+            self.login({usr:trans.username,userid:trans.userid,pwd:'password',gid:'crossword',plat:'baidu'},session,next);
         });
 //    next(null, {code: 200});
 };
@@ -687,3 +712,102 @@ Handler.prototype.vertifyPayBaidu = function(msg, session, next) {
 //    next(null, {code: 200});
 };
 
+Handler.prototype.doPayment = function(msg,session,next) {
+
+//    var uid = msg.uid;
+    var uid = session.get('uid');
+    var waresid = msg.waresid;
+
+    if (uid == null){
+        next(null,{code:500});
+        return;
+    }
+
+    var mysql = new GMySQL();
+    mysql.addGold(
+        {uid:uid,val:10},
+        function(err,msg){
+            if (msg != null && msg.code == 200){
+                next(null, {code: 200,gold:msg.gold});
+            }
+    });
+
+
+};
+
+Handler.prototype.notifyPayBaidu = function(msg, session, next) {
+    // 支付需要特定session执行。
+    var self = this;
+
+    var transdata = eval("(" + msg.transdata + ")");
+
+    setTimeout(
+        function(){
+            var mysql = new GMySQL();
+            mysql.setPayment(
+                {paycode:101,transdata:GUtils.getTransData(transdata,'baidu')},
+                function(err,msg){
+                    if (msg != null && msg.code == 200){
+                        self.doPayment(msg,session,next);
+//                        next(null, {code: 200,transdata:transdata,action:action});
+                    }else{
+                        next(null, {code: 500});
+                    }
+                });
+        }
+        ,5000);
+
+};
+
+
+Handler.prototype.vertifyPaysBaidu = function(msg, session, next) {
+
+    var self = this;
+
+    var uid = session.get('uid');
+    var gid = session.get('gid');
+
+    if (uid == null){
+        next(null,{code:500});
+        return;
+    }
+
+    var mysql = new GMySQL();
+    mysql.fetchPayments({uid:uid},function(err,msg){
+        if (msg != null && msg.code == 200){
+            var rows = msg.rows;
+
+            for (var i = 0 ; i < rows.length ; ++ i){
+                var mysql = new GMySQL();
+                mysql.setPayment(
+                    {paycode:101,transdata:rows[i]},
+                    function(err,msg){
+                        if (msg != null && msg.code == 200){
+                            self.doPayment(msg,session,function(err,msg){
+                                console.log(msg);
+
+                                var channel = self.GetHallChannel(gid);
+                                var channelService = channel.__channelService__;
+                                if (channelService){
+                                    console.log(channel.getMember(session.uid));
+                                    channelService.pushMessageByUids(
+                                        'onDoPayment',
+                                        msg,
+                                        [channel.getMember(session.uid)]);
+                                }
+
+
+                            });
+                        }else{
+//                            next(null, {code: 500});
+                        }
+                    });
+            }
+
+            next(null,{code:200});
+
+        }else{
+            next(null,{code:200});
+        }
+    });
+};

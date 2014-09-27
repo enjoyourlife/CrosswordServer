@@ -54,6 +54,7 @@ var dns = require('dns');
 var net = require('net');
 var querystring = require('querystring');
 var GMySQL = require('../mysql/GMySQL');
+var GUtils = require('../utils/GUtils');
 
 var getClientIp = function(req) {
     return req.headers['x-forwarded-for'] ||
@@ -184,6 +185,12 @@ var getHost = function(input){
     var hostx = input.split(':');
     return hostx[0];
 };
+/*
+ { transdata: '{"exorderno":"1411295926049","transid":"06514092118384853651","waresid":1,"appid":"1137915","feetype":0,"money":1,"count":1,"result":0,"transtype":0,"transtime":"2014-09-21 18:45:22","cpprivate":"gamepans","paytype":5}',
+ sign: '253b742ec7a41b987d48b2551772b403' }
+ */
+
+
 
 exports.createServer = function(port){
 
@@ -292,7 +299,6 @@ exports.createServer = function(port){
                 req.write(data);
                 req.end();
 
-
             });
 
         }else if (fname=='paybaidu'){
@@ -326,11 +332,17 @@ exports.createServer = function(port){
                 console.log(params);
 
                 var transdata = eval("(" + params.transdata + ")");
-
+                console.log(transdata);
                 var mysql = new GMySQL();
-                mysql.setPayment({result:100,transdata:transdata},
-                    function(err,msg){});
-
+                mysql.setPayment(
+                    {paycode:100,transdata:GUtils.getTransData(transdata,'baidu')},
+                    function(err,msg){
+                        if (msg != null && msg.code == 200){
+                            response.end("SUCCESS");
+                        }else{
+                            response.end("FAILURE");
+                        }
+                    });
             });
 
         }else{

@@ -234,6 +234,54 @@ GMySQL.prototype.pay = function(msg,next) {
     */
 };
 
+GMySQL.prototype.addGold = function(msg,next) {
+
+    var self = this;
+
+    var uid = msg.uid;
+    var val = msg.val;
+    var sum = val;
+
+    var SQLAddMoney = function(uid,gold)
+    {
+        var sql;
+        if (gold==null){
+            sql = 'INSERT INTO crossword (uid,gold) VALUES ('+uid+','+sum+')';
+        }else{
+            sum = (gold+val);
+            sql = 'UPDATE crossword SET gold='+sum+' WHERE uid='+uid;
+        }
+
+        self.Query(sql,function(rows){
+
+            next(null, {code: 200,gold:sum});
+            self.End();
+
+        });
+
+    };
+
+    var SQLGetMoney = function()
+    {
+        var sql = 'SELECT uid, gold FROM crossword WHERE uid = '+uid+' LIMIT 0 , 30';
+
+        self.Query(sql,function(rows){
+
+            if (rows.length==1){
+                SQLAddMoney(rows[0]['uid'],rows[0]['gold']);
+            }else{
+                next(null, {code: 500,msg: 'Register Failed��'});
+                self.End();
+            }
+
+        });
+
+    };
+
+    self.Connect(SQLGetMoney,next);
+
+};
+
 GMySQL.prototype.use = function(uid,iid,val,arg,next,cb) {
 
     var self = this;
@@ -629,9 +677,10 @@ GMySQL.prototype.setScore = function(msg,next) {
 };
 
 GMySQL.prototype.setPayment = function(msg,next) {
-
+    var self = this;
     var transdata = msg.transdata;
 
+    console.log(transdata);
 /*
     result >>
     100：来自支付方，仅当查询为空时插入。表示接受且未生效。
@@ -639,34 +688,37 @@ GMySQL.prototype.setPayment = function(msg,next) {
     0：仅查询。
 */
 
-    var result = msg.result;
+    var paycode = msg.paycode;
 
     if (transdata == null ||
         transdata.plat ==null ||
-        transdata.transid == null){
+        transdata.orderno == null){
 
         next(null,{code:500});
         return;
+
     }
 
-    var where = "WHERE plat="+transdata.plat+" AND transid="+transdata.transid;
+    var where = "WHERE plat=\'"+transdata.plat+"\' AND orderno=\'"+transdata.orderno+"\' AND appid=\'"+transdata.appid+"\'";
 
     var SQLSetPayment = function(insert) {
 
         var sql;
 
         if (insert) {
-            sql = 'INSERT INTO payment (appid,waresid,transid,orderno,plat,paytype,money,transtime,result) VALUES ('
-                + transdata.appid + ',' + transdata.waresid + ',' + transdata.transid + ','
-                + transdata.exorderno + ',' + transdata.plat + ',' + transdata.paytype + ','
-                + transdata.money+ ',' + transdata.transtime + ',' + result + ')';
+            sql = 'INSERT INTO payment (uid,appid,transid,orderno,waresid,money,count,feetype,paytype,transtime,result,plat,paycode) VALUES ('+transdata.uid+',\''
+                + transdata.appid + '\',\'' + transdata.transid + '\',\'' + transdata.orderno + '\',\''
+                + transdata.waresid + '\',' + transdata.money + ',' + transdata.count + ','
+                + transdata.feetype+ ',' + transdata.paytype + ',\'' + transdata.transtime + '\','
+                + transdata.result+ ',\'' + transdata.plat + '\',' +  paycode + ')';
         } else {
-            sql = 'UPDATE payment SET result=' + result + ' ' + where;
+            sql = 'UPDATE payment SET paycode=' + paycode + ' ' + where;
         }
 
+        console.log(sql);
         self.Query(sql, function (rows) {
 
-            next(null, {code: 200,update:true});
+            next(null, {code: 200,uid:transdata.uid,waresid:transdata.waresid});
             self.End();
 
         });
@@ -675,13 +727,14 @@ GMySQL.prototype.setPayment = function(msg,next) {
 
     var SQLGetPayment = function(){
 
-        var sql = 'SELECT id,result FROM payment '+where;
-
+        var sql = 'SELECT id,paycode FROM payment '+where;
+        console.log(sql);
         self.Query(sql,function(rows){
 
             if (rows.length==1){
-                if (result==101){
-                    if (rows['result']==100){
+                console.log(rows);
+                if (paycode==101){
+                    if (rows[0]['paycode']==100){
                         SQLSetPayment(false);
                     }else{
                         next(null, {code: 500});
@@ -691,7 +744,7 @@ GMySQL.prototype.setPayment = function(msg,next) {
                     next(null, {code: 200});
                 }
             }else{
-                if (result==100){
+                if (paycode==100){
                     SQLSetPayment(true);
                 }else{
                     // result 101 or 0.查不到。
@@ -705,4 +758,27 @@ GMySQL.prototype.setPayment = function(msg,next) {
 
     self.Connect(SQLGetPayment,next);
 
+};
+
+GMySQL.prototype.fetchPayments = function(msg,next) {
+    var self = this;
+    var uid = msg.uid;
+
+    var SQLGetPayments = function(){
+
+        var sql = 'SELECT * FROM payment WHERE paycode=100 AND uid='+uid;
+        console.log(sql);
+        self.Query(sql,function(rows){
+
+            if (rows.length>0){
+                next(null,{code:200,rows:rows});
+            }else{
+                next(null,{code:500});
+            }
+
+        });
+
+    };
+
+    self.Connect(SQLGetPayments,next);
 };
