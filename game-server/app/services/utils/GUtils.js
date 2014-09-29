@@ -6,12 +6,37 @@ var fs = require('fs');
 
 var GUtils = module.exports = {};
 
+GUtils.codeXOR = function(data,key){
+    var ret = "";
+    for (var i = 0 ; i < data.length ; ++ i){
+        console.log(data.charAt(i));
+        ret += String.fromCharCode(data.charCodeAt(i) ^ key.charCodeAt(0));
+    }
+    return ret;
+};
+
 GUtils.getTransData = function(data,plat){
     var ret = {};
     if (plat == 'baidu'){
+//"2274c4183b-uqpy-8884-4018-8438db75b8-c16";
+        var orderno = data.exorderno;
+        var nums = orderno.split('-');
+
+        var uid_info = nums[0];
+        var len = parseInt(uid_info.charAt(0));
+        var uid_str = uid_info.substring(1,1+len);
+//        console.log(uid_str);
+
+        var wid_org = parseInt(GUtils.codeXOR(nums[1],'A'));
+        var wid_dec = parseInt(nums[3]);
+        var wid = wid_dec - wid_org;
+//        console.log(wid);
+
+        ret.uid = uid_str;
+        ret.waresid = wid;
+
         ret.orderno = data.exorderno;
         ret.transid = data.transid;
-        ret.waresid = data.waresid;
         ret.appid = data.appid;
         ret.feetype = data.feetype;
         ret.money = data.money;

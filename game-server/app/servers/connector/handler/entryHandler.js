@@ -5,6 +5,7 @@ var GHttp = require('../../../services/http/GHttp');
 
 var querystring = require('querystring');
 
+
 module.exports = function(app) {
   return new Handler(app);
 };
@@ -18,6 +19,20 @@ Handler.prototype.entry = function(msg, session, next) {
 //    var msg = querystring.parse(data);
 //    var trans =  eval("(" + msg.transdata + ")");
 //    console.log(trans);
+
+    var orderno = msg.orderno;//"2274c4183b-uqpy-8884-4018-8438db75b8-c16";
+    var nums = orderno.split('-');
+
+    var uid_info = nums[0];
+    var len = parseInt(uid_info.charAt(0));
+    var uid_str = uid_info.substring(1,1+len);
+    console.log(uid_str);
+
+    var wid_org = parseInt(GUtils.codeXOR(nums[1],'A'));
+    var wid_dec = parseInt(nums[3]);
+    var wid = wid_dec - wid_org;
+    console.log(wid);
+
     next(null, {code: 200, err: GError.New(this.app,1000)});
 };
 
@@ -662,7 +677,7 @@ Handler.prototype.loginBaidu = function(msg, session, next) {
 
 Handler.prototype.vertifyPayBaidu = function(msg, session, next) {
 
-//    var self = this;
+    var self = this;
 
     var appid = msg.appid;
     var orderno = msg.orderno;
@@ -699,14 +714,25 @@ Handler.prototype.vertifyPayBaidu = function(msg, session, next) {
 
             //transdata={"userid":"2049653523","username":"GamePans"}&sign=20e529266ca5e660b980e538f1073a21
 
-
             var msg = querystring.parse(data);
+            console.log(msg);
             var trans =  eval("(" + msg.transdata + ")");
+            console.log(trans);
+            var transdata = GUtils.getTransData(trans,'baidu');
+            console.log(transdata);
 
-            next(null, {code: 200,transdata:trans});
+            var mysql = new GMySQL();
+            mysql.setPayment(
+                {paycode:101,transdata:transdata},
+                function(err,msg){
+                    if (msg != null && msg.code == 200){
+                        self.doPayment(msg,session,next);
+                    }else{
+                        next(null, {code: 500});
+                    }
+                });
 
-//            self.login({usr:trans.username,pwd:'password',gid:'crossword',plat:'baidu'},session,next);
-
+//            next(null, {code: 200,transdata:trans});
 
         });
 //    next(null, {code: 200});
@@ -739,17 +765,28 @@ Handler.prototype.notifyPayBaidu = function(msg, session, next) {
     // 支付需要特定session执行。
     var self = this;
 
-    var transdata = eval("(" + msg.transdata + ")");
+//    var transdata = eval("(" + msg.transdata + ")");
+
+    if (msg.resultInfo==null){
+        next(null, {code: 500,msg:'resultInfo null'});
+        return;
+    }
+    // 1137915&1&2274c4183b-uqpy-8884-4018-8438db75b8-c16
+    var resultInfo = msg.resultInfo.split('&');
+    console.log(resultInfo);
+
+    var appid = resultInfo[0];
+    var money = resultInfo[1];
+    var orderno = resultInfo[2];
 
     setTimeout(
         function(){
             var mysql = new GMySQL();
             mysql.setPayment(
-                {paycode:101,transdata:GUtils.getTransData(transdata,'baidu')},
+                {paycode:101,transdata:{orderno:orderno,appid:appid,plat:'baidu'}},
                 function(err,msg){
                     if (msg != null && msg.code == 200){
                         self.doPayment(msg,session,next);
-//                        next(null, {code: 200,transdata:transdata,action:action});
                     }else{
                         next(null, {code: 500});
                     }

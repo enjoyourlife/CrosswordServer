@@ -53,11 +53,25 @@
           port: port,
           log: true
         }, function() {
+//            pomelo.request("connector.entryHandler.entry", {
+//                    orderno:"2274c4183b-uqpy-8884-4018-8438db75b8-c16"
+//            }, function(data) {
+//                console.log(data);
+//            });
 
+//        pomelo.request("connector.entryHandler.notifyPayBaidu", {
+//            resultInfo:"1137915&1&2274c4183b-uqpy-8884-4018-8438db75b8-c16"
+//        }, function(data) {
+//            console.log(data);
+//          });
 
-        pomelo.request("connector.entryHandler.entry", "hello pomelo", function(data) {
-            console.log(data);
-          });
+            pomelo.request("connector.entryHandler.vertifyPayBaidu", {
+                appid:"1137915",
+                orderno:"2274c4183b-uqpy-8884-4018-8438db75b8-c16",
+                appkey:"hGBhBNeAyiIHw2kqQfxfoZl7"
+            }, function(data) {
+                console.log(data);
+            });
 
 //            pomelo.request("connector.entryHandler.notifyPayBaidu", {
 //                transdata: '{\"exorderno\":\"1411295926049\",\"transid\":\"06514092118384853651\",\"waresid\":1,\"appid\":\"1137915\",\"feetype\":0,\"money\":1,\"count\":1,\"result\":0,\"transtype\":0,\"transtime\":\"2014-09-21 18:45:22\",\"cpprivate\":\"gamepans\",\"paytype\":5}'

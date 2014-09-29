@@ -692,9 +692,10 @@ GMySQL.prototype.setPayment = function(msg,next) {
 
     if (transdata == null ||
         transdata.plat ==null ||
-        transdata.orderno == null){
+        transdata.orderno == null ||
+        transdata.appid == null){
 
-        next(null,{code:500});
+        next(null,{code:500,msg:'arg null'});
         return;
 
     }
@@ -737,7 +738,7 @@ GMySQL.prototype.setPayment = function(msg,next) {
                     if (rows[0]['paycode']==100){
                         SQLSetPayment(false);
                     }else{
-                        next(null, {code: 500});
+                        next(null, {code: 500,msg:'len=1 pc=101'});
                     }
                 }else{
                     // result 100 or 0.查到。
@@ -748,7 +749,7 @@ GMySQL.prototype.setPayment = function(msg,next) {
                     SQLSetPayment(true);
                 }else{
                     // result 101 or 0.查不到。
-                    next(null, {code: 500});
+                    next(null, {code: 500,msg:'no record...'});
                 }
             }
 
