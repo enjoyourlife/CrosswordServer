@@ -426,7 +426,7 @@ Handler.prototype.getTops = function(msg, session, next) {
 Handler.prototype.enter = function(msg, session, next) {
 
     if (!!session.uid && session.get('typ')!='game'){
-        next(null, {code: 500});
+        next(null, {code: 500,msg:'err session.'});
         return;
     }
 
@@ -439,7 +439,7 @@ Handler.prototype.enter = function(msg, session, next) {
     var xcid = msg.cid;  // 频道ID，自动匹配的不用传。
 
     if (!uuid || !gid){
-        next(null, {code: 500});
+        next(null, {code: 500,msg:'err arg.'});
         return;
     }
 
@@ -453,7 +453,7 @@ Handler.prototype.enter = function(msg, session, next) {
         if( !! sessions_login && sessions_login.length==1) {
             uid = sessions_login[0].get('uid');
         }else{
-            next(null, {code: 500});
+            next(null, {code: 500,msg:'err login.'});
             return;
         }
     }
@@ -477,7 +477,7 @@ Handler.prototype.enter = function(msg, session, next) {
 
         // 已经坐下了，将不能再次坐下。
         if (!!session.get('cid')){
-            next(null, {code: 500});
+            next(null, {code: 500,msg:'err cid.'});
             return;
         }
 
@@ -487,7 +487,7 @@ Handler.prototype.enter = function(msg, session, next) {
             function(err,cid,users,user){
                 if(err){
                     console.log(err);
-                    next(null, {code: 500});
+                    next(null, {code: 500,msg:'err add.'});
                     return;
                 }
 
@@ -526,7 +526,7 @@ Handler.prototype.enter = function(msg, session, next) {
             });
 
     }else{
-        next(null, {code: 500});
+        next(null, {code: 500,msg:'err rpc.'});
 //        sessionService.kick(usr, 'kick', null);
     }
 
