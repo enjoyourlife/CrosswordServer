@@ -29,7 +29,7 @@ GUtils.getTransData = function(data,plat){
 
         var wid_org = parseInt(GUtils.codeXOR(nums[1],'A'));
         var wid_dec = parseInt(nums[3]);
-        var wid = wid_dec - wid_org;
+        var wid = wid_org - wid_dec;
 //        console.log(wid);
 
         ret.uid = uid_str;

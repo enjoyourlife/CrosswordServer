@@ -5,6 +5,7 @@ module.exports = function(app) {
 var GameRemote = function(app) {
 	this.app = app;
     this.gameHall = app.get('GGameHall');
+    this.gameConfig = app.get('GConfig');
 };
 
 GameRemote.prototype.add = function(uid, sid, cid, cb) {
@@ -51,4 +52,8 @@ GameRemote.prototype.list = function(cb) {
 
     cb(null,rooms);
 
+};
+
+GameRemote.prototype.cfg = function(cb) {
+    cb(null,this.gameConfig.config);
 };

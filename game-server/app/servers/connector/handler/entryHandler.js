@@ -228,7 +228,7 @@ Handler.prototype.login = function(msg, session, next) {
 
     var verify = true;
 
-    if (plat == 'baidu')
+    if (plat == 'baidu' || plat=='waps')
     {
         verify = false;
     }
@@ -715,11 +715,11 @@ Handler.prototype.vertifyPayBaidu = function(msg, session, next) {
             //transdata={"userid":"2049653523","username":"GamePans"}&sign=20e529266ca5e660b980e538f1073a21
 
             var msg = querystring.parse(data);
-            console.log(msg);
+//            console.log(msg);
             var trans =  eval("(" + msg.transdata + ")");
-            console.log(trans);
+//            console.log(trans);
             var transdata = GUtils.getTransData(trans,'baidu');
-            console.log(transdata);
+//            console.log(transdata);
 
             var mysql = new GMySQL();
             mysql.setPayment(
@@ -749,15 +749,28 @@ Handler.prototype.doPayment = function(msg,session,next) {
         return;
     }
 
+    var val = 0;
+    if (waresid=='0'){
+        val = 100;
+    }else if (waresid=='1'){
+        val = 200;
+    }else if (waresid=='2'){
+        val = 300;
+    }else if (waresid=='3'){
+        val = 400;
+    }else{
+        next(null, {code: 200});
+        return;
+    }
+
     var mysql = new GMySQL();
     mysql.addGold(
-        {uid:uid,val:10},
+        {uid:uid,val:val},
         function(err,msg){
             if (msg != null && msg.code == 200){
                 next(null, {code: 200,gold:msg.gold});
             }
     });
-
 
 };
 
