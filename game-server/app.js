@@ -9,13 +9,14 @@ var app = pomelo.createApp();
 app.set('name', 'CrosswordServer');
 app.set('public',new GConfig(app,'public'));
 
+
+
 // app configuration
 app.configure('production|development', 'master', function(){
 
-//    console.log(app);
     var port = app.master.http;
     var GHttp = require('./app/services/http/GHttp');
-    GHttp.createServer(port);
+    GHttp.createExpress(port);
 
 //    var GUtils = require('./app/services/utils/GUtils');
 //    var fname = GUtils.genMapPath(10);

@@ -118,9 +118,22 @@ Handler.prototype.register = function(msg, session, next) {
     var userid = msg.userid;
     var plat = msg.plat;
 
+    if (sex == null){
+        sex = 1;
+    }
+    if (nick == null){
+        nick = usr;
+    }
+    if (userid == null){
+        userid = '0';
+    }
+    if (plat == null){
+        plat = 'default';
+    }
+
     console.log('register:'+usr+'/'+pwd+'/'+sex+'/'+nick);
 
-    if (!usr || !pwd || sex==null || !nick){
+    if (!usr || !pwd){
         next(null, {code: 500,eid: 401});
         return;
     }
@@ -140,22 +153,6 @@ Handler.prototype.register = function(msg, session, next) {
 
         });
 
-        /*
-        mysql.conn.query(sql,
-            function(err, rows, fields) {
-                if (err.errno != 'ECONNRESET') {
-                    throw err;
-                } else {
-                    // do nothing
-                }
-
-
-                self.login(msg,session,next);
-
-                mysql.conn.end();
-        });
-        */
-
     };
 
     var SQLFindUser = function()
@@ -173,41 +170,10 @@ Handler.prototype.register = function(msg, session, next) {
 
         });
 
-        /*
-        mysql.conn.query(sql,
-            function(err, rows, fields) {
-                if (err.errno != 'ECONNRESET') {
-                    throw err;
-                } else {
-                    // do nothing
-                }
-
-                if (rows.length==1){
-                    next(null, {code: 500,eid: 601,msg: 'Register Failed��'});
-                    mysql.conn.end();
-                }else{
-                    SQLInsertUser();
-                }
-            }
-        );
-        */
     };
 
     mysql.Connect(SQLFindUser,next);
 
-    /*
-    mysql.conn.connect(function(error, results) {
-        if(error) {
-            console.log('Connection Error: ' + error.message);
-            mysql.conn.end();
-            next(null, {code: 500,eid: 501,msg: 'Register Failed��'});
-            return;
-        }
-        console.log('Connected to MySQL');
-
-        SQLFindUser();
-    });
-    */
 };
 
 Handler.prototype.login = function(msg, session, next) {
@@ -225,15 +191,24 @@ Handler.prototype.login = function(msg, session, next) {
     var pwd = msg.pwd;
     var gid = msg.gid;
     var plat = msg.plat;
+    var anymous =  msg.anymous;
 
     var verify = true;
+
+    if (plat == null){
+        plat = 'default';
+    }
+
+    if (anymous == null){
+        anymous = false;
+    }
 
     if (plat == 'baidu' || plat=='waps')
     {
         verify = false;
     }
 
-    if (gid=='escape' || gid=='killer'){
+    if (gid=='escape'){
         pwd = 'password';
         verify = false;
     }else{
@@ -261,6 +236,13 @@ Handler.prototype.login = function(msg, session, next) {
                 console.log(info);
 
                 self.dologin(uid,info,msg,session,next);
+            }else if (anymous==true){
+
+                var uid = GUtils.MD5(msg.usr);
+                var info = {uid:uid,name:msg.usr,nick:msg.usr,sex:1,gold:0,exp:0};
+
+                self.dologin(uid,info,msg,session,next);
+
             }else if (!verify){
                 msg.sex = 1;
                 msg.nick = msg.usr;
@@ -275,57 +257,11 @@ Handler.prototype.login = function(msg, session, next) {
 
         });
 
-        /*
-        mysql.conn.query(sql,
-            function(err, rows, fields) {
-                if (err.errno != 'ECONNRESET') {
-                    throw err;
-                } else {
-                    // do nothing
-                }
-
-                if (rows.length>=1){
-
-                    var uid = rows[0]['uid'];
-                    var info = rows[0];
-
-                    console.log(info);
-
-//                    delete info.uuid;
-//                    delete info.password;
-
-                    self.dologin(uid,info,msg,session,next);
-                }else if (!verify){
-                    msg.sex = 0;
-                    msg.nick = 'nick';
-                    msg.pwd = 'password';
-                    self.register(msg, session, next);
-//                    self.dologin(uid,info,msg,session,next);
-//                    next(null, {code: 500,msg: 'Login ! verify Failed'});
-                }else{
-
-                    next(null, {code: 500,msg: 'Login Failed'});
-                }
-
-                mysql.conn.end();
-            });
-        */
 
     };
 
     mysql.Connect(SQLLoginUser,next);
 
-    /*
-    mysql.conn.connect(function(error, results) {
-        if(error) {
-            console.log('Connection Error: ' + error.message);
-            mysql.conn.end();
-            return;
-        }
-        console.log('Connected to MySQL');
-        SQLLoginUser();
-    });
-    */
 };
 
 Handler.prototype.logout = function(msg, session, next) {

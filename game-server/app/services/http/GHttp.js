@@ -403,4 +403,83 @@ exports.postDataToServer = function(host, port, path, myData, cb){
 
 };
 
+var express = require('express');
+var bodyParser = require('body-parser');
+
+exports.createExpress = function(port){
+
+    var app = express();
+
+/*
+ 根据提示,到connect 3.0的WIKI,找到了答案.如果在3.0中使用connect.bodyParser()会在程序启动时收到弃用警告,但并不影响程序的正常工作.
+ 虽然警告没无大碍,但既然使用最新版,就跟新版的规则来吧.由于Express使用了connect中间件,参照connect WIKI给的解决方案,用json和urlencoded替换bodyParser.即是把如下的.
+ app.use(express.bodyParser());
+ 替换为
+ app.use(express.urlencoded());app.use(express.json());
+ 并且,安装模块npm install --save connect-multiparty,把
+ app.use(express.multipart());
+ 替换为
+ 1 app.use(require('connect-multiparty')());
+ */
+
+//    app.configure(function() {
+//        app.use(express.bodyParser());
+//    });
+
+//    app.get('/hello/*', function(req, res){
+//        console.log(req.query.name);
+//        console.log(req.query.email);
+//        res.send('Get Over');
+//    });
+
+// parse application/x-www-form-urlencoded
+    app.use(bodyParser.urlencoded({ extended: false }))
+
+// parse application/json
+    app.use(bodyParser.json())
+
+    app.get('/getip', function(req, res){
+
+        var host = getHost(req.headers['host']);
+        if (net.isIPv4(host)){
+            res.send(host);
+        }else{
+            dns.resolve4(host, function (err, addresses) {
+                if (err){
+                    res.send('127.0.0.1');
+                    throw err;
+                }else{
+                    console.log(addresses);
+                    console.log('addresses: ' + JSON.stringify(addresses));
+                    res.send(addresses[0]);
+                }
+            });
+        }
+
+    });
+
+    app.post('/paybaidu', function(req, res){
+
+        var transdata = eval("(" + req.body.transdata + ")");
+        console.log(transdata);
+
+        var mysql = new GMySQL();
+        mysql.setPayment(
+            {paycode:100,transdata:GUtils.getTransData(transdata,'baidu')},
+            function(err,msg){
+                if (msg != null && msg.code == 200){
+                    res.send("SUCCESS");
+                }else{
+                    res.send("FAILURE");
+                }
+            });
+
+    });
+
+    app.listen(port);
+
+    console.log('Express Server running at http://localhost:%d/',port);
+
+};
+
 
