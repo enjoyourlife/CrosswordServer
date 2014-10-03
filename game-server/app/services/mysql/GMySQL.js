@@ -4,17 +4,31 @@
 
 var mysql      = require('mysql');
 
+var fs = require('fs');
+
+var config_games = JSON.parse(
+    fs.readFileSync('./config/games.json'));
+
 var GMySQL = function() {
+
+    var cfg = config_games.mysql;
 
     var conn = mysql.createConnection({
 
+        host     : cfg.host,
+        database : cfg.database,
+        port     : cfg.port,
+        user     : cfg.user,
+        password : cfg.password
+
+/*
         host     : '127.0.0.1',
         database : 'test',
         port     : '3306',
         user     : 'root',
         password : 'kissme'
 
-/*
+
         host     : 'sqld.duapp.com',
         database : 'JutovcgeAHNrOhqMinSE',
         port     : '4050',

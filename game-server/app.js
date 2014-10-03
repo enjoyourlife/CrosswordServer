@@ -1,6 +1,6 @@
 var pomelo = require('pomelo');
-var mysql      = require('mysql');
 var GConfig = require('./app/services/utils/GConfig');
+//var mysql      = require('mysql');
 
 /**
  * Init app for client.
@@ -8,8 +8,6 @@ var GConfig = require('./app/services/utils/GConfig');
 var app = pomelo.createApp();
 app.set('name', 'CrosswordServer');
 app.set('public',new GConfig(app,'public'));
-
-
 
 // app configuration
 app.configure('production|development', 'master', function(){
