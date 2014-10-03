@@ -376,7 +376,7 @@ Handler.prototype.getTops = function(msg, session, next) {
 
 Handler.prototype.enter = function(msg, session, next) {
 
-    if (!!session.uid && session.get('typ')!='game'){
+    if (session.uid!=null && session.get('typ')!='game'){
         next(null, {code: 500,msg:'err session.'});
         return;
     }
@@ -389,7 +389,7 @@ Handler.prototype.enter = function(msg, session, next) {
     var gid = msg.gid;  // 游戏ID，请传入crossword
     var xcid = msg.cid;  // 频道ID，自动匹配的不用传。
 
-    if (!uuid || !gid){
+    if (uuid==null || gid==null){
         next(null, {code: 500,msg:'err arg.'});
         return;
     }
@@ -418,11 +418,26 @@ Handler.prototype.enter = function(msg, session, next) {
         if(session.uid==null && !! sessionService.getByUid(uid)) {
             sessionService.kick(uid, 'kick', null);
         }
-
-        var is_new = (!!session.uid)?false:true;
+        console.log('enter user '+session.uid + ' uid:'+uid);
+//        var is_new = (session.uid!=null)?false:true;
+        var is_new = (session.uid==null || session.uid!=uid)?true:false;
         if (is_new) {
             // do session config.
-            session.bind(uid,null);
+        	var uid_old = session.uid;
+        	if (uid_old!=null){
+        		session.unbind(uid_old,function(err){
+        			console.log('===$$$$$$$$$$=======');
+        			console.log(err);
+        			if (!err){
+        				session.bind(uid,function(err){
+        					console.log('===#########=======');
+                			console.log(err);
+        				});
+        			}
+        		});
+        	}else{
+        		session.bind(uid);
+        	}
             session.on('closed', onUserLeave.bind(null, self.app));
         }
 

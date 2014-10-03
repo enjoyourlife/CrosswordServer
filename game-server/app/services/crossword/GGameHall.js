@@ -248,10 +248,16 @@ GRoom.prototype.useItem = function(uid,iid,gold,arg){
             break;
         case 4:
         {
+        	console.log('GRoom.prototype.useItem 4+++++++');
+        	console.log(this.time_cnt);
+        	console.log(arg);
             var tcnt =this.time_cnt - arg;
+            console.log(tcnt);
             if (tcnt<0){
                 tcnt = 0;
             }
+            console.log(tcnt);
+            console.log('GRoom.prototype.useItem 4-------');
             this.time_cnt = tcnt;
         }
             break;
@@ -309,7 +315,11 @@ GRoom.prototype.addAIUser = function(uid,sid){
 GRoom.prototype.addUser = function(uid,sid){
     var self = this;
 
-    this.channel.add(uid,sid);
+    if (uid!=0){
+    	console.log('channel add ' + uid + ','+sid);
+    	this.channel.add(uid,sid);
+    }
+    
 
     var users = this.users;
     for (var i = 0 , len = users.length ; i < len ; ++ i){
@@ -478,6 +488,10 @@ GRoom.prototype.setUser = function(uid,key,val){
 };
 
 GRoom.prototype.pushMessage = function(route, msg, opts, cb) {
+	console.log('==============');
+	console.log(route);
+	console.log(this.channel.getMembers());
+	console.log('==============');
     this.channel.pushMessage(route,msg,opts,cb);
 };
 
@@ -537,7 +551,7 @@ GRoom.prototype.startAITime = function() {
 GRoom.prototype.startTime = function() {
     var self = this;
     this.time_cnt = 0;
-    var time_tab = 60;
+    var time_tab = 5;
     this.iid = setInterval(
         function(){
 
@@ -548,12 +562,13 @@ GRoom.prototype.startTime = function() {
                 console.log('auto stop for time up.');
                 self.stopGame(1);
             }else{
-
-                var param = {
-                    route: 'onGameTime',
-                    time:   self.time_cnt
-                };
-                self.pushMessage(param);
+            	if (self.time_cnt % 60 == 0){
+                    var param = {
+                            route: 'onGameTime',
+                            time:   self.time_cnt
+                        };
+                        self.pushMessage(param);
+            	}
             }
 
         },time_tab*1000);
@@ -577,7 +592,8 @@ GRoom.prototype.autoStart = function() {
         cid: self.xcid
     };
     self.pushMessage(param);
-
+    console.log('onGameReady');
+    
     var size = this.config.getById(this.xcid.level,'levels','size');
     var fname = GUtils.genMapPath(size);
     console.log('get filename:'+fname);
@@ -606,6 +622,7 @@ GRoom.prototype.autoStart = function() {
                 chess: self.chess
             };
             self.pushMessage(param);
+            console.log('onGameStart');
 
             self.door = GCODE.ROOM.G_ROOM_GAME;
             self.tid = null;
