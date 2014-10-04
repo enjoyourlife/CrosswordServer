@@ -483,6 +483,7 @@ exports.createExpress = function(port){
 
     console.log('Express Server running at http://localhost:%d/',port);
 
+//    return app;
 };
 
 

@@ -20,6 +20,14 @@
 
   "crossword":{
 
+      "wares":[{"id":0,"price":2,"gold":100},
+          {"id":1,"price":5,"gold":200},
+          {"id":2,"price":4,"gold":300},
+          {"id":3,"price":3,"gold":400},
+          {"id":4,"price":2},
+          {"id":5,"price":1},
+          {"id":6,"price":3},
+          {"id":7,"price":2}],
 
       "items":[{"id":0,"name":"test","price":2},
             {"id":1,"name":"demo","price":5},
@@ -51,8 +59,12 @@
   },
 
     "escape":{
-
+        "ai":[{"id":0,"min":5,"max":10},
+            {"id":1,"min":15,"max":20},
+            {"id":2,"min":25,"max":30}
+        ]
     },
+
     "killer":{
         "ai":[{"id":0,"min":5,"max":10},
             {"id":1,"min":15,"max":20},

@@ -47,5 +47,5 @@ GameRemote.prototype.kick = function(uid, sid, cid , cb) {
 };
 
 GameRemote.prototype.cfg = function(cb) {
-    cb(null,this.gameConfig.config);
+    cb(null,this.gameConfig);
 };

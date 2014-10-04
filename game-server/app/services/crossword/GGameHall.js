@@ -259,6 +259,14 @@ GRoom.prototype.useItem = function(uid,iid,gold,arg){
             console.log(tcnt);
             console.log('GRoom.prototype.useItem 4-------');
             this.time_cnt = tcnt;
+
+            var param = {
+                route: 'onGameTime',
+                time:   this.time_cnt,
+                fix:true
+            };
+            this.pushMessage(param);
+
         }
             break;
         case 5:
@@ -565,7 +573,8 @@ GRoom.prototype.startTime = function() {
             	if (self.time_cnt % 60 == 0){
                     var param = {
                             route: 'onGameTime',
-                            time:   self.time_cnt
+                            time:   self.time_cnt,
+                            fix:false
                         };
                         self.pushMessage(param);
             	}
@@ -1081,7 +1090,6 @@ GRoomEx.prototype.getLiveCount = function() {
 
 var GGameHall = function(app) {
     this.app = app;
-
     this.rooms = {};
 };
 

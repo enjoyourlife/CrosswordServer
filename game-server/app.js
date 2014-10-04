@@ -1,6 +1,6 @@
 var pomelo = require('pomelo');
 var GConfig = require('./app/services/utils/GConfig');
-//var mysql      = require('mysql');
+var Express = require ('./app/components/Express');
 
 /**
  * Init app for client.
@@ -13,12 +13,11 @@ app.set('public',new GConfig(app,'public'));
 app.configure('production|development', 'master', function(){
 
     var port = app.master.http;
-    var GHttp = require('./app/services/http/GHttp');
-    GHttp.createExpress(port);
+//    var GHttp = require('./app/services/http/GHttp');
+//    GHttp.createExpress(port);
 
-//    var GUtils = require('./app/services/utils/GUtils');
-//    var fname = GUtils.genMapPath(10);
-//    console.log(fname);
+    app.load (Express, {port: port});
+
 });
 
 app.configure('production|development', 'connector', function(){
@@ -29,6 +28,8 @@ app.configure('production|development', 'connector', function(){
       useDict : true,
       useProtobuf : true
     });
+
+    app.set('GConfig',new GConfig());
 });
 
 app.configure('production|development', 'gate', function(){
@@ -71,4 +72,8 @@ app.start();
 
 process.on('uncaughtException', function (err) {
   console.error(' Caught exception: ' + err.stack);
+});
+
+process.on('exit', function(code) {
+    console.log('About to exit with code:', code);
 });

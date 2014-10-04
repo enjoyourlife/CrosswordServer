@@ -55,5 +55,5 @@ GameRemote.prototype.list = function(cb) {
 };
 
 GameRemote.prototype.cfg = function(cb) {
-    cb(null,this.gameConfig.config);
+    cb(null,this.gameConfig);
 };

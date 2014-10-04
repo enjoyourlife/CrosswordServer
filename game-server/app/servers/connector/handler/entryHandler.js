@@ -11,7 +11,8 @@ module.exports = function(app) {
 };
 
 var Handler = function(app) {
-  this.app = app;
+    this.app = app;
+    this.appConfig = app.get('GConfig');
 };
 
 Handler.prototype.entry = function(msg, session, next) {
@@ -37,11 +38,11 @@ Handler.prototype.entry = function(msg, session, next) {
 };
 
 
-Handler.prototype.GetHallChannel = function(gid){
-    var channelService = this.app.get('channelService');
-    var channel = channelService.getChannel('Hall'+gid, true);
-    return channel;
-}
+//Handler.prototype.GetHallChannel = function(gid){
+//    var channelService = this.app.get('channelService');
+//    var channel = channelService.getChannel('Hall'+gid, true);
+//    return channel;
+//}
 
 // ---------------------------------------------------- //
 Handler.prototype.dologin = function(uid, info, msg, session, next){
@@ -65,7 +66,7 @@ Handler.prototype.dologin = function(uid, info, msg, session, next){
         session.bind(uuid);
         session.on('closed', onUserLogout.bind(null, self.app));
 
-        self.GetHallChannel(gid).add(uuid,self.app.get('serverId'));
+//        self.GetHallChannel(gid).add(uuid,self.app.get('serverId'));
 
         rpc.gameRemote.cfg(session,
 
@@ -94,7 +95,7 @@ Handler.prototype.dologin = function(uid, info, msg, session, next){
 
 
 
-            next(null, {code: 200,uuid:uuid,uid: uid,config:cfg,info:info});
+            next(null, {code: 200,uuid:uuid,uid: uid,config:cfg.config,info:info});
         });
     }else{
         next(null, {code: 500,result: 0});
@@ -288,12 +289,12 @@ var onUserLogout = function(app, session) {
     }
 
     console.log('onUserLogout');
-    var gid = session.get('gid');
-    var channelService = app.get('channelService');
-    var channel = channelService.getChannel('Hall'+gid, false);
-    if (channel){
-        channel.leave(session.uid,app.get('serverId'));
-    }
+//    var gid = session.get('gid');
+//    var channelService = app.get('channelService');
+//    var channel = channelService.getChannel('Hall'+gid, false);
+//    if (channel){
+//        channel.leave(session.uid,app.get('serverId'));
+//    }
 };
 
 Handler.prototype.pay = function(msg, session, next) {
@@ -626,6 +627,38 @@ Handler.prototype.loginBaidu = function(msg, session, next) {
 //    next(null, {code: 200});
 };
 
+Handler.prototype.doPayment = function(msg,session,next) {
+
+    var waresid = msg.waresid;
+    var orderno = msg.orderno;
+
+    var uid = session.get('uid');
+    var gid = session.get('gid');
+
+    if (uid == null || gid == null){
+        next(null,{code:500,msg:'uid or gid null!'});
+        return;
+    }
+
+    var val = this.appConfig.getById(waresid,'wares','gold',gid);
+
+    if (val == null || val <= 0){
+        next(null, {code: 200,msg:'gold add zero.'});
+        return;
+    }
+
+    var mysql = new GMySQL();
+    mysql.addGold(
+        {uid:uid,val:val},
+        function(err,msg){
+            if (msg != null && msg.code == 200){
+                next(null, {code: 200,
+                    result:{orderno:orderno,wid:waresid,gold:msg.gold}});
+            }
+        });
+
+};
+
 Handler.prototype.vertifyPayBaidu = function(msg, session, next) {
 
     var self = this;
@@ -633,9 +666,6 @@ Handler.prototype.vertifyPayBaidu = function(msg, session, next) {
     var appid = msg.appid;
     var orderno = msg.orderno;
     var appkey = msg.appkey;
-
-//    var token = msg.token;
-//    var plat = msg.plat;
 
 //    console.log("appid " + appid + "   " + appkey + "   " + token + "   " + plat);
 
@@ -679,7 +709,9 @@ Handler.prototype.vertifyPayBaidu = function(msg, session, next) {
                     if (msg != null && msg.code == 200){
                         self.doPayment(msg,session,next);
                     }else{
-                        next(null, {code: 500});
+                        console.log(err);
+                        console.log(msg);
+                        next(null, {code: 500,msg:'set pay err!'});
                     }
                 });
 
@@ -687,42 +719,6 @@ Handler.prototype.vertifyPayBaidu = function(msg, session, next) {
 
         });
 //    next(null, {code: 200});
-};
-
-Handler.prototype.doPayment = function(msg,session,next) {
-
-//    var uid = msg.uid;
-    var uid = session.get('uid');
-    var waresid = msg.waresid;
-
-    if (uid == null){
-        next(null,{code:500});
-        return;
-    }
-
-    var val = 0;
-    if (waresid=='0'){
-        val = 100;
-    }else if (waresid=='1'){
-        val = 200;
-    }else if (waresid=='2'){
-        val = 300;
-    }else if (waresid=='3'){
-        val = 400;
-    }else{
-        next(null, {code: 200});
-        return;
-    }
-
-    var mysql = new GMySQL();
-    mysql.addGold(
-        {uid:uid,val:val},
-        function(err,msg){
-            if (msg != null && msg.code == 200){
-                next(null, {code: 200,gold:msg.gold});
-            }
-    });
-
 };
 
 Handler.prototype.notifyPayBaidu = function(msg, session, next) {
@@ -760,7 +756,7 @@ Handler.prototype.notifyPayBaidu = function(msg, session, next) {
 
 };
 
-
+/*
 Handler.prototype.vertifyPaysBaidu = function(msg, session, next) {
 
     var self = this;
@@ -812,3 +808,4 @@ Handler.prototype.vertifyPaysBaidu = function(msg, session, next) {
         }
     });
 };
+*/

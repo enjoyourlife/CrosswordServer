@@ -3,15 +3,17 @@
  */
 
 var mysql      = require('mysql');
+var GConfig      = require('../utils/GConfig');
 
 var fs = require('fs');
 
-var config_games = JSON.parse(
-    fs.readFileSync('./config/games.json'));
+var config_mysql = new GConfig(null,"mysql");
+//console.log("MySQL................");
+//console.log(config_mysql.config);
 
 var GMySQL = function() {
 
-    var cfg = config_games.mysql;
+    var cfg = config_mysql.config;
 
     var conn = mysql.createConnection({
 
@@ -311,16 +313,7 @@ GMySQL.prototype.use = function(uid,iid,val,arg,next,cb) {
             self.End();
 
         });
-        /*
-        self.conn.query(sql,
-            function(err, rows, fields) {
-                if (err) throw err;
 
-                cb((gold-val));
-                next(null, {code: 200,uid:uid,iid:iid,gold:(gold-val),arg:arg});
-                self.conn.end();
-            });
-        */
     };
     /*
      SELECT user.id, crossword.gold
@@ -350,43 +343,12 @@ GMySQL.prototype.use = function(uid,iid,val,arg,next,cb) {
             }
 
         });
-        /*
-        self.conn.query(sql,
-            function(err, rows, fields) {
-                if (err) throw err;
 
-                if (rows.length==1){
-                    var gold = rows[0]['gold'];
-                    if (gold >= val){
-                        SQLUseMoney(gold);
-                    }else{
-                        next(null, {code: 500,gold:gold,eid:1,msg: 'Register A Failed��'});
-                        self.conn.end();
-                    }
-                }else{
-                    next(null, {code: 500,gold:0,eid:1,msg: 'Register B Failed��'});
-                    self.conn.end();
-                }
-            }
-        );
-        */
 
     };
 
     self.Connect(SQLGetMoney,next);
 
-    /*
-    self.conn.connect(function(error, results) {
-        if(error) {
-            console.log('Connection Error: ' + error.message);
-            self.conn.end();
-            return;
-        }
-        console.log('Connected to MySQL');
-
-        SQLGetMoney();
-    });
-    */
 };
 
 GMySQL.prototype.reward = function(uid,gold_val,exp_val,next) {
@@ -733,7 +695,8 @@ GMySQL.prototype.setPayment = function(msg,next) {
         console.log(sql);
         self.Query(sql, function (rows) {
 
-            next(null, {code: 200,uid:transdata.uid,waresid:transdata.waresid});
+            next(null, {code: 200,uid:transdata.uid,
+                orderno:transdata.orderno,waresid:transdata.waresid});
             self.End();
 
         });
