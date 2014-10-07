@@ -9,6 +9,10 @@ var app = pomelo.createApp();
 app.set('name', 'CrosswordServer');
 app.set('public',new GConfig(app,'public'));
 
+//app.enable('systemMonitor');
+
+//console.log("process pid:"+process.pid);
+
 // app configuration
 app.configure('production|development', 'master', function(){
 
@@ -18,6 +22,10 @@ app.configure('production|development', 'master', function(){
 
     app.load (Express, {port: port});
 
+//    var consoleService = require('./lib/consoleService');
+//    this.masterConsole = consoleService.createMasterConsole({});
+//    console.log(this.masterConsole);
+//    this.masterConsole.stop();
 });
 
 app.configure('production|development', 'connector', function(){

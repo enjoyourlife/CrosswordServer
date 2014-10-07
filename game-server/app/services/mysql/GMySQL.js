@@ -107,7 +107,8 @@ GMySQL.prototype.info = function(msg,next) {
 
     var SQLGetInfo = function()
     {
-        var sql = 'SELECT '+gid+'.*,user.nick,user.sex, user.name FROM '+gid+' INNER JOIN user ON user.id = '+gid+'.uid WHERE uid='+uid;
+        var sql = 'SELECT '+gid+'.*,user.nick,user.sex, user.name FROM '+gid+
+            ' INNER JOIN user ON user.id = '+gid+'.uid WHERE uid='+uid;
 
         self.Query(sql,function(rows){
 
@@ -115,47 +116,16 @@ GMySQL.prototype.info = function(msg,next) {
                 var info = rows[0];
                 next(null, {code: 200,info:info});
             }else{
-                next(null, {code: 200});
+                next(null, {code: 200,msg:'empty user.'});
             }
             self.End();
 
         });
 
-        /*
-        self.conn.query('SELECT '+gid+'.*,user.nick,user.sex, user.name FROM '+gid+' INNER JOIN user ON user.id = '+gid+'.uid WHERE uid='+uid,
-            function(err, rows, fields) {
-                if (err) throw err;
-
-                if (rows.length==1){
-
-                    var info = rows[0];
-
-                    next(null, {code: 200,info:info});
-
-                }else{
-
-                    next(null, {code: 200});
-                }
-
-                self.conn.end();
-            });
-        */
     };
 
-
     self.Connect(SQLGetInfo,next);
-    /*
-    self.conn.connect(function(error, results) {
-        if(error) {
-            console.log('Connection Error: ' + error.message);
-            self.conn.end();
-            return;
-        }
-        console.log('Connected to MySQL');
 
-        SQLGetInfo();
-    });
-    */
 };
 
 GMySQL.prototype.pay = function(msg,next) {

@@ -334,12 +334,19 @@ Handler.prototype.getinfo = function(msg, session, next) {
     var uid = msg.uid;
     var gid = session.get('gid');
 
-    if (!uid || !gid){
+    if (uid==null || gid==null){
         next(null, {code: 500});
         return;
     }
 
     console.log('uid:'+uid+ ' and gid:'+gid);
+
+    if (uid==0){
+        next(null, {code: 200,
+            info:{uid:0,gold:50,exp:100,
+            nick:'Guest',sex:1,name:'Guest'}});
+        return;
+    }
 
     var mysql = new GMySQL();
     mysql.info({uid:uid,gid:gid},next);
@@ -641,10 +648,10 @@ Handler.prototype.doPayment = function(msg,session,next) {
     }
 
     var val = this.appConfig.getById(waresid,'wares','gold',gid);
-    console.log(waresid);
-    console.log(gid);
-    console.log(val);
-    console.log(this.appConfig.config);
+//    console.log(waresid);
+//    console.log(gid);
+//    console.log(val);
+//    console.log(this.appConfig.config);
     if (val == null || val <= 0){
         next(null, {code: 200,msg:'gold add zero.',result:{orderno:orderno,wid:waresid}});
         return;
@@ -673,7 +680,7 @@ Handler.prototype.vertifyPayBaidu = function(msg, session, next) {
 //    console.log("appid " + appid + "   " + appkey + "   " + token + "   " + plat);
 
     if (!appid || !appkey || !orderno){
-        next(null, {code: 500});
+        next(null, {code: 500,msg:'appid,appkey,order null.'});
         return;
     }
 
@@ -712,9 +719,11 @@ Handler.prototype.vertifyPayBaidu = function(msg, session, next) {
                     if (msg != null && msg.code == 200){
                         self.doPayment(msg,session,next);
                     }else{
-                        console.log(err);
-                        console.log(msg);
-                        next(null, {code: 500,msg:'set pay err!'});
+                        var paycode = msg.paycode;
+                        if (paycode == null){
+                            paycode = 0;
+                        }
+                        next(null, {code: 500,paycode:paycode,msg:'set pay err!'});
                     }
                 });
 
@@ -751,7 +760,11 @@ Handler.prototype.notifyPayBaidu = function(msg, session, next) {
                     if (msg != null && msg.code == 200){
                         self.doPayment(msg,session,next);
                     }else{
-                        next(null, {code: 500});
+                        var paycode = msg.paycode;
+                        if (paycode == null){
+                            paycode = 0;
+                        }
+                        next(null, {code: 500,paycode:paycode});
                     }
                 });
         }

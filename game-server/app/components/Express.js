@@ -17,7 +17,7 @@ var getHost = function(input){
     return hostx[0];
 };
 
-var CreateServer = function(){
+var CreateServer = function(master){
     var app = express();
 
     app.use(bodyParser.urlencoded({ extended: false }));
@@ -28,6 +28,30 @@ var CreateServer = function(){
     app.get('/', function(req, res){
         res.sendfile('index.html');
     });
+
+//    app.get('/exit', function(req, res){
+//        process.exit(1001);
+//        console.log(process.getgroups());
+//        res.send('Bye bye!');
+
+//        var connector = master.getServerById('connector-server-1');
+//        console.log(connector);
+//        process.kill(connector.pid);
+
+//        connector.stop(true);
+//        master.stop(true);
+//        console.log(master);
+//        master.removeServers(['connector-server-1']);
+//    });
+
+//    app.get('/enter', function(req, res){
+//        process.exit(1001);
+//        console.log(process.getgroups());
+//        res.send('Bye bye!');
+
+//        console.log(master);
+//        master.addServers(['connector-server-1']);
+//    });
 
     app.get('/getip', function(req, res){
 
@@ -74,7 +98,7 @@ var Express = function(app, opts) {
     this.app = app;
     this.opts = opts;
 
-    this.http = CreateServer();
+    this.http = CreateServer(app);
 };
 
 Express.name = '__Express__';
