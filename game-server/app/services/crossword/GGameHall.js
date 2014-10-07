@@ -258,6 +258,7 @@ GRoom.prototype.useItem = function(uid,iid,gold,arg){
             }
             console.log(tcnt);
             console.log('GRoom.prototype.useItem 4-------');
+            arg = this.time_cnt - tcnt;
             this.time_cnt = tcnt;
 
             var param = {
@@ -267,6 +268,7 @@ GRoom.prototype.useItem = function(uid,iid,gold,arg){
             };
             this.pushMessage(param);
 
+            
         }
             break;
         case 5:
