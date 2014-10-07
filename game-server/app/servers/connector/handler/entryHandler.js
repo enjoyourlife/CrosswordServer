@@ -95,7 +95,7 @@ Handler.prototype.dologin = function(uid, info, msg, session, next){
 
 
 
-            next(null, {code: 200,uuid:uuid,uid: uid,config:cfg.config,info:info});
+            next(null, {code: 200,uuid:uuid,uid: uid,/*config:cfg.config,*/info:info});
         });
     }else{
         next(null, {code: 500,result: 0});
@@ -641,9 +641,12 @@ Handler.prototype.doPayment = function(msg,session,next) {
     }
 
     var val = this.appConfig.getById(waresid,'wares','gold',gid);
-
+    console.log(waresid);
+    console.log(gid);
+    console.log(val);
+    console.log(this.appConfig.config);
     if (val == null || val <= 0){
-        next(null, {code: 200,msg:'gold add zero.'});
+        next(null, {code: 200,msg:'gold add zero.',result:{orderno:orderno,wid:waresid}});
         return;
     }
 

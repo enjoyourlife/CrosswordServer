@@ -45,6 +45,7 @@ GUtils.getTransData = function(data,plat){
         ret.transtype = data.transtype;
         ret.transtime = data.transtime;
         ret.paytype = data.paytype;
+        
         ret.plat = plat;
     }
 

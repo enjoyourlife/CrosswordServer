@@ -443,8 +443,9 @@ GRoom.prototype.getUsers = function(is_chess){
 };
 
 GRoom.prototype.setUser = function(uid,key,val){
+
     if (this.door!=GCODE.ROOM.G_ROOM_GAME){
-        return;
+        return false;
     }
 
     if (this.xcid.type==1){
@@ -493,6 +494,7 @@ GRoom.prototype.setUser = function(uid,key,val){
     }
 
     this.doLogic();
+    return true;
 };
 
 GRoom.prototype.pushMessage = function(route, msg, opts, cb) {

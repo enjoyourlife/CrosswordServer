@@ -25,7 +25,9 @@ Handler.prototype.send = function(msg, session, next) {
 
     var room = this.gameHall.getRoomById(cid);
     if (!!room){
-        room.setUser(uid,'game',val);
+    	if (room.isEmptyChess(val)){
+    		room.setUser(uid,'game',val);
+    	}
         next(null, {code:200});
     }else{
         next(null, {code: 500});

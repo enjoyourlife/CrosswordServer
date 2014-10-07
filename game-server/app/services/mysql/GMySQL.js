@@ -705,7 +705,7 @@ GMySQL.prototype.setPayment = function(msg,next) {
 
     var SQLGetPayment = function(){
 
-        var sql = 'SELECT id,paycode FROM payment '+where;
+        var sql = 'SELECT id,waresid,uid,paycode FROM payment '+where;
         console.log(sql);
         self.Query(sql,function(rows){
 
@@ -713,9 +713,11 @@ GMySQL.prototype.setPayment = function(msg,next) {
                 console.log(rows);
                 if (paycode==101){
                     if (rows[0]['paycode']==100){
+                    	transdata.waresid = rows[0]['waresid'];
+                    	transdata.uid = rows[0]['uid'];
                         SQLSetPayment(false);
                     }else{
-                        next(null, {code: 500,msg:'len=1 pc=101'});
+                        next(null, {code: 500,msg:'len=1 pc=101',paycode:101});
                     }
                 }else{
                     // result 100 or 0.查到。
@@ -726,7 +728,7 @@ GMySQL.prototype.setPayment = function(msg,next) {
                     SQLSetPayment(true);
                 }else{
                     // result 101 or 0.查不到。
-                    next(null, {code: 500,msg:'no record...'});
+                    next(null, {code: 500,msg:'no record...',paycode:0});
                 }
             }
 
