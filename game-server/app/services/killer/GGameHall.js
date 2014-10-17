@@ -938,8 +938,8 @@ GRoom.prototype.endGameState = function() {
 //            break;
         case GCODE.GAME.STAT_NIGHT:
         {
-            this.doKillerTarget();
             this.doPoliceTarget();
+            this.doKillerTarget();
             this.hintResult();
         }
             break;

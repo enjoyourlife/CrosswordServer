@@ -20,7 +20,7 @@ Handler.prototype.entry = function(msg, session, next) {
 //    var msg = querystring.parse(data);
 //    var trans =  eval("(" + msg.transdata + ")");
 //    console.log(trans);
-
+    /*
     var orderno = msg.orderno;//"2274c4183b-uqpy-8884-4018-8438db75b8-c16";
     var nums = orderno.split('-');
 
@@ -33,7 +33,8 @@ Handler.prototype.entry = function(msg, session, next) {
     var wid_dec = parseInt(nums[3]);
     var wid = wid_dec - wid_org;
     console.log(wid);
-
+    */
+    console.log('Handler.prototype.entry ...');
     next(null, {code: 200, err: GError.New(this.app,1000)});
 };
 
