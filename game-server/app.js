@@ -15,17 +15,21 @@ app.set('public',new GConfig(app,'public'));
 
 // app configuration
 app.configure('production|development', 'master', function(){
+    /*
+    app.event.on('add_servers',function(stream){
+        console.log(' ADD !!!!!!!!!!!!!!!!!!!');
+    });
 
-    var port = app.master.http;
+    app.event.on('remove_servers',function(stream){
+        console.log(' REMOVE !!!!!!!!!!!!!!!!!!!');
+    });
+    */
+//    var port = app.master.http;
 //    var GHttp = require('./app/services/http/GHttp');
 //    GHttp.createExpress(port);
 
-    app.load (Express, {port: port});
+    app.load (Express, {port: app.master.http});
 
-//    var consoleService = require('./lib/consoleService');
-//    this.masterConsole = consoleService.createMasterConsole({});
-//    console.log(this.masterConsole);
-//    this.masterConsole.stop();
 });
 
 app.configure('production|development', 'connector', function(){
@@ -35,6 +39,21 @@ app.configure('production|development', 'connector', function(){
       heartbeat : 3,
       useDict : true,
       useProtobuf : true
+    });
+    /*
+    app.event.on('add_servers',function(stream){
+        console.log(' ADD !!!!!!!!!!!!!!!!!!!');
+    });
+    */
+    app.event.on('remove_servers',function(stream){
+        var servers = stream;
+        for (var i = 0  ,len = servers.length; i < len ; ++ i){
+            var server = servers[i];
+            if (server=='killer-server-1'){
+//                var sessionService = app.get('sessionService');
+//                sessionService.kickBySessionId(server,null);
+            }
+        }
     });
 
     app.set('GConfig',new GConfig());
@@ -54,7 +73,15 @@ app.configure('production|development', 'crossword', function(){
 
     var GGameHall = require('./app/services/crossword/GGameHall');
     app.set('GGameHall',new GGameHall(app));
+    /*
+    app.event.on('add_servers',function(stream){
+        console.log(' ADD !!!!!!!!!!!!!!!!!!!');
+    });
 
+    app.event.on('remove_servers',function(stream){
+        console.log(' REMOVE !!!!!!!!!!!!!!!!!!!');
+    });
+    */
 });
 
 app.configure('production|development', 'escape', function(){
@@ -63,7 +90,15 @@ app.configure('production|development', 'escape', function(){
 
     var GGameHall = require('./app/services/escape/GGameHall');
     app.set('GGameHall',new GGameHall(app));
+    /*
+    app.event.on('add_servers',function(stream){
+        console.log(' ADD !!!!!!!!!!!!!!!!!!!');
+    });
 
+    app.event.on('remove_servers',function(stream){
+        console.log(' REMOVE !!!!!!!!!!!!!!!!!!!');
+    });
+    */
 });
 
 app.configure('production|development', 'killer', function(){
@@ -71,7 +106,29 @@ app.configure('production|development', 'killer', function(){
     app.set('GConfig',new GConfig(app));
 
     var GGameHall = require('./app/services/killer/GGameHall');
-    app.set('GGameHall',new GGameHall(app));
+    var hall = new GGameHall(app);
+    app.set('GGameHall',hall);
+
+    app.event.on('add_servers',function(stream){
+        var servers = stream;
+        for (var i = 0 ,len = servers.length; i < len ; ++ i){
+            var server = servers[i];
+            if (server.serverType=='connector'){
+                hall.onAddConnector();
+            }
+        }
+    });
+
+    app.event.on('remove_servers',function(stream){
+        var servers = stream;
+        console.log(servers);
+        for (var i = 0  ,len = servers.length; i < len ; ++ i){
+            var server = servers[i];
+            if (server=='connector-server-1'){
+                hall.onRemoveConnector();
+            }
+        }
+    });
 
 });
 

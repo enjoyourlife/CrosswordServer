@@ -9,30 +9,22 @@ var GameRemote = function(app) {
 };
 
 GameRemote.prototype.add = function(uid, sid, cid, cb) {
-
     console.log('before GameRemote.prototype.add ...[%s][%s]',uid,sid);
-
-    console.log(cid);
-
     var room = this.gameHall.getOpenRoom(cid);
     if (!!room){
         room.addUser(uid,sid,cb);
     }else{
         cb('err when add',null,null);
     }
-
     console.log('end ... GameRemote.prototype.add');
 };
 
 GameRemote.prototype.kick = function(uid, sid, cid , cb) {
-
-    console.log('before GameRemote.prototype.kick ...[%s][%s][%s]',uid,sid,cid);
-
+    console.log('before GameRemote.prototype.kick ...[%s][%s]',uid,sid);
     if (uid==null || sid==null || cid==null){
         cb(new Error('Null arg'));
         return;
     }
-
     var room = this.gameHall.getRoomById(cid);
     if (!!room){
         room.delUser(uid,sid);
@@ -40,18 +32,13 @@ GameRemote.prototype.kick = function(uid, sid, cid , cb) {
     }else{
         cb(new Error('Null room'));
     }
-
     console.log('end GameRemote.prototype.kick ...');
 };
 
 GameRemote.prototype.list = function(cb) {
-
     console.log('before GameRemote.prototype.list ...');
-
     var rooms = this.gameHall.getRoomList();
-
     cb(null,rooms);
-
 };
 
 GameRemote.prototype.cfg = function(cb) {

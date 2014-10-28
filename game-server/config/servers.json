@@ -1,13 +1,13 @@
 {
   "development":{
     "connector": [
-    {"id": "connector-server-1", "host": "127.0.0.1", "port": 3150, "clientPort": 3010, "frontend": true}
+    {"id": "connector-server-1", "host": "127.0.0.1", "port": 3150, "clientPort": 3010, "frontend": true, "restart-force": true}
     ],  
     "crossword":[
-             {"id":"crossword-server-1", "host":"127.0.0.1", "port":6050}
+             {"id":"crossword-server-1", "host":"127.0.0.1", "port":6050, "restart-force": true}
         ],
       "killer":[
-          {"id":"killer-server-1", "host":"127.0.0.1", "port":6052}
+          {"id":"killer-server-1", "host":"127.0.0.1", "port":6052, "restart-force": true}
       ]
   },
   "production":{

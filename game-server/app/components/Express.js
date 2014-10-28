@@ -70,7 +70,6 @@ var CreateServer = function(master){
                 }
             });
         }
-
     });
 
     app.post('/paybaidu', function(req, res){
@@ -104,22 +103,22 @@ var Express = function(app, opts) {
 Express.name = '__Express__';
 
 Express.prototype.start = function(cb) {
-  console.log('Express Start');
+    console.log('Express Start');
 
     var port = this.opts.port;
     this.http.listen(port);
     console.log('Express Server running at http://localhost:%d/',port);
 
-  process.nextTick (cb);
-}
+    process.nextTick (cb);
+};
 
 Express.prototype.afterStart = function(cb) {
-  console.log ('Express afterStart');
-  process.nextTick (cb);
-}
+    console.log ('Express afterStart');
+    process.nextTick (cb);
+};
 
 Express.prototype.stop = function(force, cb) {
     console.log ('Express stop');
 //    this.http.delete;
-  process.nextTick (cb);
-}
+    process.nextTick (cb);
+};

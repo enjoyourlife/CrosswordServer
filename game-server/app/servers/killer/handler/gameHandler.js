@@ -3,7 +3,7 @@ module.exports = function(app) {
 };
 
 var Handler = function(app) {
-  this.app = app;
+    this.app = app;
     this.gameHall = app.get('GGameHall');
 };
 
@@ -16,7 +16,6 @@ var Handler = function(app) {
  *
  */
 Handler.prototype.send = function(msg, session, next) {
-
     var dis = msg.dis;
     var cid = session.get('cid');
     var uid = session.uid;
@@ -33,7 +32,6 @@ Handler.prototype.send = function(msg, session, next) {
     }else{
         next(null, {code: 500});
     }
-
 };
 
 Handler.prototype.init = function(msg, session, next) {
@@ -53,7 +51,6 @@ Handler.prototype.init = function(msg, session, next) {
 };
 
 Handler.prototype.cursor = function(msg, session, next) {
-
     if (!session.uid){
         return;
     }
@@ -66,11 +63,9 @@ Handler.prototype.cursor = function(msg, session, next) {
     var result = room.setCursor(uid,tid);
 
     next(null, {code:200,result:result});
-
 };
 
 Handler.prototype.ready = function(msg, session, next) {
-
     if (!session.uid) {
         return;
     }
@@ -80,14 +75,11 @@ Handler.prototype.ready = function(msg, session, next) {
     var uid = session.uid;
 
     var room = this.gameHall.getRoomById(cid);
-
     var result = room.setReady(uid,ready);
-
     next(null, {code:200,result:result});
 };
 
 Handler.prototype.chat = function(msg, session, next) {
-
     if (!session.uid) {
         return;
     }
