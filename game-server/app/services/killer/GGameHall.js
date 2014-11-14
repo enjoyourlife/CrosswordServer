@@ -1074,7 +1074,7 @@ GRoom.prototype.getUserData = function(uid,key) {
 GRoom.prototype.clearUsers = function() {
     var users = this.users;
     var xx = this.getUserCount();
-    console.log('clearUsers %d',xx);
+//    console.log('clearUsers %d',xx);
     for (var i = 0,len = users.length ; i < len ; ++ i)
     {
         var usr = users[i];
