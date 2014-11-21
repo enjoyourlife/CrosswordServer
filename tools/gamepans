@@ -1,13 +1,15 @@
+#!/bin/bash
+export PATH=$PATH:/usr/local/bin
+SRV_DIR=/root/CrosswordServer/game-server/
 start()
 {
-    echo "start pomeloService"
-    pomelo start -e production -d /root/CrosswordServer/game-server/ &
+    cd $SRV_DIR
+    nohup pomelo start -e production >/dev/null &
     exit 0;
 }
 stop()
 {
     pomelo stop
-    echo "stop pomeloService"
 }
 
 case "$1" in
@@ -25,4 +27,3 @@ restart)
     echo "usage: $0 start|stop|restart"
     exit 0;
 esac
-

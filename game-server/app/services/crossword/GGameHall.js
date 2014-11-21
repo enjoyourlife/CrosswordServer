@@ -22,6 +22,10 @@ var GCODE = {
     }
 };
 
+var GCONST = {
+    AI_WAIT_SEC : 50
+};
+
 var GUser = function(idx){
     this.idx = idx;
 
@@ -66,7 +70,7 @@ GUser.prototype.fini = function(){
     this.exp_mult = 1;
 };
 
-GUser.prototype.initChess = function(chess){
+GUser.prototype.initChess = function(chess,xcid){
     this.chess = [];
     this.flags = [];
     var words = chess['words'];
@@ -95,8 +99,11 @@ GUser.prototype.initChess = function(chess){
         }
     }
     // giveup one or two.
-    this.aichess.pop();
-    this.aichess.pop();
+    if (xcid.type==2){
+        this.aichess.pop();
+        this.aichess.pop();
+    }
+
 };
 
 GUser.prototype.setChessByPos = function(pos){
@@ -363,7 +370,7 @@ GRoom.prototype.addUser = function(uid,sid){
                 self.addAIUser(0,sid);
                 self.autoStart();
             }
-            ,10000);
+            ,1000 * GCONST.AI_WAIT_SEC);
     }
 };
 
@@ -608,9 +615,12 @@ GRoom.prototype.autoStart = function() {
     console.log('onGameReady');
     
     var size = this.config.getById(this.xcid.level,'levels','size');
-    var fname = GUtils.genMapPath(size);
-    console.log('get filename:'+fname);
-    this.chess = GUtils.JsonFromFile('./data/'+fname+'.json');
+    var prefix = 'map_'+size+'_'+size+'_';
+    this.chess = GUtils.JsonFromDir('./data/',prefix,'.json');
+
+//    var fname = GUtils.genMapPath(size);
+//    console.log('get filename:'+fname);
+//    this.chess = GUtils.JsonFromFile('./data/'+fname+'.json');
 
     // rand chess flag ...
     var words = this.chess['words'];
@@ -624,7 +634,7 @@ GRoom.prototype.autoStart = function() {
     var users = this.users;
     for (var i = 0 , len = users.length ; i < len ; ++ i){
         var user = users[i];
-        user.initChess(this.chess);
+        user.initChess(this.chess,self.xcid);
     }
 
     this.tid = setTimeout(

@@ -4,7 +4,31 @@
 
 var fs = require('fs');
 
-var GUtils = module.exports = {};
+
+var NameMan;
+var NameWoMan;
+
+var GUtils = module.exports ={};
+
+GUtils.randName = function(sex){
+
+    var names;
+    if (sex == 1){
+        if (NameMan==null){
+            var data = fs.readFileSync('./data/robotplayername_man.json','utf8');
+            NameMan = data.split("*");
+        }
+        names = NameMan;
+    }else{
+        if (NameWoMan==null){
+            var data = fs.readFileSync('./data/robotplayername_woman.json','utf8');
+            NameWoMan = data.split("*");
+        }
+        names = NameWoMan;
+    }
+    var rand = GUtils.randInt(0,names.length-1);
+    return names[rand];
+};
 
 GUtils.codeXOR = function(data,key){
     var ret = "";
@@ -165,3 +189,43 @@ GUtils.JsonFromFile = function(path)
 
     return result;
 };
+
+GUtils.JsonFromDir = function(path,prefix,type)
+{
+    var result;
+    var file_path = null;
+    try{
+        var data = fs.readdirSync(path);
+//        console.log(path);
+//        console.log(data);
+//        console.log(prefix);
+//        console.log(type);
+        var count = 0;
+        for(var i=1;i<data.length;i++) {
+            var file = data[i];
+            if (file.indexOf(prefix)==0 && file.match(type)!=null){
+                count = count + 1;
+            }
+        }
+        var rand = GUtils.randInt(1,count);
+        count = 0;
+        for(var i=1;i<data.length;i++) {
+            var file = data[i];
+            if (file.indexOf(prefix)==0 && file.match(type)!=null){
+                count = count + 1;
+                if (count == rand){
+                    file_path = file;
+                    break;
+                }
+            }
+        }
+
+    }catch(err){}
+
+    if (file_path != null){
+        result = GUtils.JsonFromFile(path+file_path);
+    }
+
+    return result;
+};
+

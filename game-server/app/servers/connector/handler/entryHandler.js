@@ -32,6 +32,12 @@ Handler.prototype.entry = function(msg, session, next) {
     var wid = wid_dec - wid_org;
     console.log(wid);
     */
+
+//    var chess = GUtils.JsonFromDir('./data/','map_12_12_','.json');
+//    console.log(chess);
+
+//    console.log(GUtils.randName(2));
+
     console.log('Handler.prototype.entry ...');
     next(null, {code: 200, err: GError.New(this.app,1000)});
 };
@@ -117,13 +123,30 @@ Handler.prototype.register = function(msg, session, next) {
     }
 
     var self = this;
+    var SQLInitUser = function(insertId)
+    {
+        var sql = 'INSERT INTO crossword (uid, gold) VALUES (' + insertId + ',500)';
+        mysql.Query(sql,function(rows){
+            self.login(msg,session,next);
+            mysql.End();
+        });
+    };
+
     var SQLInsertUser = function()
     {
         var sql = 'INSERT INTO user (name, password,nick,sex,uuid,plat) VALUES (\''+
             usr+'\', \''+pwd+'\',\''+nick+'\','+sex+',\''+userid+'\',\''+plat+'\')';
         mysql.Query(sql,function(rows){
-            self.login(msg,session,next);
-            mysql.End();
+//            console.log('xxxxxxxxxxxxxxxxxxxxxxx');
+//            console.log(rows);
+
+            if (msg.gid=='crossword'){
+                var insertId = rows.insertId;
+                SQLInitUser(insertId);
+            }else{
+                self.login(msg,session,next);
+                mysql.End();
+            }
         });
     };
 
@@ -264,9 +287,13 @@ Handler.prototype.getinfo = function(msg, session, next) {
     }
     console.log('uid:'+uid+ ' and gid:'+gid);
     if (uid==0){
+        var gold = GUtils.randInt(20,500);
+        var exp = GUtils.randInt(0,200);
+        var sex = GUtils.randInt(1,2);
+        var name = GUtils.randName(sex);
         next(null, {code: 200,
-            info:{uid:0,gold:50,exp:100,
-            nick:'Guest',sex:1,name:'Guest'}});
+            info:{uid:0,gold:gold,exp:exp,
+            nick:name,sex:sex,name:'Guest'}});
         return;
     }
     var mysql = new GMySQL();
