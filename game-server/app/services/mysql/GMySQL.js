@@ -694,7 +694,9 @@ GMySQL.prototype.setPayment = function(msg,next) {
                     next(null, {code: 200});
                 }
             }else{
-                if (paycode==100){
+                if (paycode==100) {
+                    SQLSetPayment(true);
+                }else if (transdata.plat=='apple' && paycode==101){
                     SQLSetPayment(true);
                 }else{
                     // result 101 or 0.查不到。

@@ -4,7 +4,7 @@ SRV_DIR=/root/CrosswordServer/game-server/
 start()
 {
     cd $SRV_DIR
-    nohup pomelo start -e production >/dev/null &
+    nohup pomelo start -e production >/dev/null 2>&1 &
     exit 0;
 }
 stop()

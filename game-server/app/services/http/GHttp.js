@@ -371,8 +371,13 @@ exports.postDataToServer = function(host, port, path, myData, cb){
         }
     };
 
+    var HttpProxy = http;
+    if (port == 443){
+        HttpProxy = https;
+    }
+
     //使用http 发送
-    var req = http.request(options, function(res) {
+    var req = HttpProxy.request(options, function(res) {
         console.log('STATUS: ' + res.statusCode);
         console.log('HEADERS: ' + JSON.stringify(res.headers));
         // 设置字符编码

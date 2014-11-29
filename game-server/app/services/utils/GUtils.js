@@ -42,19 +42,17 @@ GUtils.codeXOR = function(data,key){
 GUtils.getTransData = function(data,plat){
     var ret = {};
     if (plat == 'baidu'){
-//"2274c4183b-uqpy-8884-4018-8438db75b8-c16";
+        //"2274c4183b-uqpy-8884-4018-8438db75b8-c16";
         var orderno = data.exorderno;
         var nums = orderno.split('-');
 
         var uid_info = nums[0];
         var len = parseInt(uid_info.charAt(0));
         var uid_str = uid_info.substring(1,1+len);
-//        console.log(uid_str);
 
         var wid_org = parseInt(GUtils.codeXOR(nums[1],'A'));
         var wid_dec = parseInt(nums[3]);
         var wid = wid_org - wid_dec;
-//        console.log(wid);
 
         ret.uid = uid_str;
         ret.waresid = wid;
@@ -70,6 +68,37 @@ GUtils.getTransData = function(data,plat){
         ret.transtime = data.transtime;
         ret.paytype = data.paytype;
         
+        ret.plat = plat;
+    }else if (plat == 'apple'){
+
+/*
+
+ {
+ "receipt":{"original_purchase_date_pst":"2014-11-20 03:18:42 America/Los_Angeles", "purchase_date_ms":"1416682229379", "un
+ ique_identifier":"ec809845c1bf0b5c16becc9dc9793de3184579ae", "original_transaction_id":"1000000132431784", "bvrs":"1.5.0",
+ "transaction_id":"1000000132732164", "quantity":"1", "unique_vendor_identifier":"3B209896-1CD3-4D18-951E-C197B7719733", "
+ item_id":"943517069", "product_id":"kpUnlock", "purchase_date":"2014-11-22 18:50:29 Etc/GMT", "original_purchase_date":"20
+ 14-11-20 11:18:42 Etc/GMT", "purchase_date_pst":"2014-11-22 10:50:29 America/Los_Angeles", "bid":"org.gamepans.application
+ .keysetpiano", "original_purchase_date_ms":"1416482322000"}, "status":0}
+
+ */
+
+        var receipt = data['receipt'];
+
+        ret.uid = data['uid'];  //fix
+        ret.waresid = data['waresid'];  //fix
+
+        ret.orderno = receipt['unique_identifier'];
+        ret.transid = receipt['transaction_id'];
+        ret.appid = receipt['bid'];
+        ret.feetype = 0;
+        ret.money = data['money'];  //fix
+        ret.count = receipt['quantity'];
+        ret.result = data['status'];
+        ret.transtype = 0;
+        ret.transtime = receipt['purchase_date'];
+        ret.paytype = 0;
+
         ret.plat = plat;
     }
 
