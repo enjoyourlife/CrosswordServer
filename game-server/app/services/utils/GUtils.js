@@ -88,7 +88,7 @@ GUtils.getTransData = function(data,plat){
         ret.uid = data['uid'];  //fix
         ret.waresid = data['waresid'];  //fix
 
-        ret.orderno = receipt['unique_identifier'];
+        ret.orderno = receipt['transaction_id'];
         ret.transid = receipt['transaction_id'];
         ret.appid = receipt['bid'];
         ret.feetype = 0;

@@ -698,7 +698,10 @@ Handler.prototype.doPayment = function(msg,session,next) {
     var gid = session.get('gid');
 
     if (uid == null || gid == null){
-        next(null,{code:500,msg:'uid or gid null!'});
+        // fix for empty login...
+        next(null, {code: 200,msg:'empty uid and gid.',
+            result:{orderno:orderno,wid:waresid}});
+//        next(null,{code:500,msg:'uid or gid null!'});
         return;
     }
 
@@ -711,6 +714,8 @@ Handler.prototype.doPayment = function(msg,session,next) {
         next(null, {code: 200,msg:'gold add zero.',result:{orderno:orderno,wid:waresid}});
         return;
     }
+
+
     var mysql = new GMySQL();
     mysql.addGold(
         {uid:uid,val:val},
@@ -858,10 +863,10 @@ Handler.prototype.notifyPayApple = function(msg, session, next) {
                 next(null, {code: 500,paycode:100});
             }
 
-            transdata['uid'] = session.get('uid');
-            transdata['money'] = 1;
-            var product_id = transdata['receipt']['product_id'];
-            transdata['waresid'] = product_id;
+            transdata['waresid'] = msg.proId;
+            var price = self.appConfig.getById(msg.proId,'wares','price',msg.gid);
+            transdata['money'] = price;
+            transdata['uid'] = msg.uid;
 
             var mysql = new GMySQL();
             mysql.setPayment(

@@ -1,0 +1,1 @@
+gcc example/request.c -I./include -I./deps/uv/include -I./deps/jansson/src libpomelo.a ./deps/uv/libuv.a ./deps/jansson/src/.libs/libjansson.a -lpthread -lrt

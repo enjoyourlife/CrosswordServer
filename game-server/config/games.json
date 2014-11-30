@@ -20,14 +20,14 @@
 
   "crossword":{
 
-      "wares":[{"id":0,"price":2,"gold":100},
-          {"id":1,"price":5,"gold":200},
-          {"id":2,"price":4,"gold":300},
-          {"id":3,"price":3,"gold":400},
-          {"id":4,"price":2},
-          {"id":5,"price":1},
-          {"id":6,"price":3},
-          {"id":7,"price":2}],
+      "wares":[{"id":0,"price":600,"gold":5000},
+          {"id":1,"price":1200,"gold":11000},
+          {"id":2,"price":3000,"gold":33000},
+          {"id":3,"price":5000,"gold":66000},
+          {"id":4,"price":600},
+          {"id":5,"price":1200},
+          {"id":6,"price":3000},
+          {"id":7,"price":5000}],
 
       "items":[{"id":0,"price":10},
             {"id":1,"price":60},
