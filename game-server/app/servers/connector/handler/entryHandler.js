@@ -861,10 +861,15 @@ Handler.prototype.notifyPayApple = function(msg, session, next) {
 
             if (transdata['status'] != 0){
                 next(null, {code: 500,paycode:100});
+                return;
             }
 
-            transdata['waresid'] = msg.proId;
             var price = self.appConfig.getById(msg.proId,'wares','price',msg.gid);
+            if (price == null){
+                next(null, {code: 500,paycode:100});
+                return;
+            }
+            transdata['waresid'] = msg.proId;
             transdata['money'] = price;
             transdata['uid'] = msg.uid;
 
@@ -883,38 +888,6 @@ Handler.prototype.notifyPayApple = function(msg, session, next) {
                     }
                 });
         });
-
-    /*
-//    var transdata = eval("(" + msg.transdata + ")");
-    if (msg.resultInfo==null){
-        next(null, {code: 500,msg:'resultInfo null'});
-        return;
-    }
-    // 1137915&1&2274c4183b-uqpy-8884-4018-8438db75b8-c16
-    var resultInfo = msg.resultInfo.split('&');
-    console.log(resultInfo);
-    var appid = resultInfo[0];
-    var money = resultInfo[1];
-    var orderno = resultInfo[2];
-    setTimeout(
-        function(){
-            var mysql = new GMySQL();
-            mysql.setPayment(
-                {paycode:101,transdata:{orderno:orderno,appid:appid,plat:'baidu'}},
-                function(err,msg){
-                    if (msg != null && msg.code == 200){
-                        self.doPayment(msg,session,next);
-                    }else{
-                        var paycode = msg.paycode;
-                        if (paycode == null){
-                            paycode = 0;
-                        }
-                        next(null, {code: 500,paycode:paycode});
-                    }
-                });
-        }
-        ,5000);
-    */
 
 };
 
