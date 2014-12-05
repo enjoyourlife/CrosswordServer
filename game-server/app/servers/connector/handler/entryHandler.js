@@ -864,12 +864,33 @@ Handler.prototype.notifyPayApple = function(msg, session, next) {
                 return;
             }
 
-            var price = self.appConfig.getById(msg.proId,'wares','price',msg.gid);
+            var receipt = transdata['receipt'];
+            var product_id = receipt['product_id'];
+            var proId = '0';
+            if (product_id=='com.crossword.gold0'){
+                proId = '0';
+            }else if (product_id=='com.crossword.gold1'){
+                proId = '1';
+            }else if (product_id=='com.crossword.gold2'){
+                proId = '2';
+            }else if (product_id=='com.crossword.gold3'){
+                proId = '3';
+            }else if (product_id=='com.crossword.silver0'){
+                proId = '4';
+            }else if (product_id=='com.crossword.silver1'){
+                proId = '5';
+            }else if (product_id=='com.crossword.silver2'){
+                proId = '6';
+            }else if (product_id=='com.crossword.silver3'){
+                proId = '7';
+            }
+
+            var price = self.appConfig.getById(proId,'wares','price',msg.gid);
             if (price == null){
                 next(null, {code: 500,paycode:100});
                 return;
             }
-            transdata['waresid'] = msg.proId;
+            transdata['waresid'] = proId;
             transdata['money'] = price;
             transdata['uid'] = msg.uid;
 
