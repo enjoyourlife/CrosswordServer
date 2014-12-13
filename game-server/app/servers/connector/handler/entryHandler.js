@@ -339,6 +339,11 @@ Handler.prototype.login = function(msg, session, next) {
         verify = false;
     }
 
+    if (gid=='crossword' && plat=='apple'){
+        if (pwd == null){pwd = 'password';}
+        verify = false;
+    }
+
     if (gid=='escape'){
         pwd = 'password';
         verify = false;
@@ -350,7 +355,31 @@ Handler.prototype.login = function(msg, session, next) {
         next(null, {code: 500});
         return;
     }
-
+    var SQLLoginUserEx = function()
+    {
+        var sql = 'SELECT user.id as uid,user.name,user.nick,user.sex,'+gid+'.gold,'+gid+'.silver,'+gid+'.exp FROM user LEFT JOIN '+gid
+            +' ON user.id='+gid+'.uid WHERE name=\''+usr+'\' AND password=\''+pwd+'\' LIMIT 0,30';
+        mysql.Query(sql,function(rows){
+            if (rows.length>=1){
+                var uid = rows[0]['uid'];
+                var info = rows[0];
+                console.log(info);
+                self.dologin(uid,info,msg,session,next);
+//            }else if (anymous==true){
+//                var uid = GUtils.MD5(msg.usr);
+//                var info = {uid:uid,name:msg.usr,nick:msg.usr,sex:1,gold:0,exp:0};
+//                self.dologin(uid,info,msg,session,next);
+            }else if (!verify){
+                msg.sex = 1;
+                msg.nick = 'Guest';
+                msg.pwd = pwd;
+                self.register(msg, session, next);
+            }else{
+                next(null, {code: 500,msg: 'Login Failed'});
+            }
+            mysql.End();
+        });
+    };
     var SQLLoginUser = function()
     {
         var sql = 'SELECT user.id as uid,user.name,user.nick,user.sex,'+gid+'.gold,'+gid+'.exp FROM user LEFT JOIN '+gid
@@ -377,7 +406,11 @@ Handler.prototype.login = function(msg, session, next) {
             mysql.End();
         });
     };
-    mysql.Connect(SQLLoginUser,next);
+    if (gid == 'crossword'){
+        mysql.Connect(SQLLoginUserEx,next);
+    }else{
+        mysql.Connect(SQLLoginUser,next);
+    }
 };
 
 Handler.prototype.logout = function(msg, session, next) {
@@ -439,11 +472,12 @@ Handler.prototype.getinfo = function(msg, session, next) {
     console.log('uid:'+uid+ ' and gid:'+gid);
     if (uid==0){
         var gold = GUtils.randInt(20,500);
+        var silver = GUtils.randInt(20,500);
         var exp = GUtils.randInt(0,200);
         var sex = GUtils.randInt(1,2);
         var name = GUtils.randName(sex);
         next(null, {code: 200,
-            info:{uid:0,gold:gold,exp:exp,
+            info:{uid:0,gold:gold,silver:silver,exp:exp,
             nick:name,sex:sex,name:'Guest'}});
         return;
     }
@@ -912,56 +946,3 @@ Handler.prototype.notifyPayApple = function(msg, session, next) {
 
 };
 
-/*
-Handler.prototype.vertifyPaysBaidu = function(msg, session, next) {
-
-    var self = this;
-
-    var uid = session.get('uid');
-    var gid = session.get('gid');
-
-    if (uid == null){
-        next(null,{code:500});
-        return;
-    }
-
-    var mysql = new GMySQL();
-    mysql.fetchPayments({uid:uid},function(err,msg){
-        if (msg != null && msg.code == 200){
-            var rows = msg.rows;
-
-            for (var i = 0 ; i < rows.length ; ++ i){
-                var mysql = new GMySQL();
-                mysql.setPayment(
-                    {paycode:101,transdata:rows[i]},
-                    function(err,msg){
-                        if (msg != null && msg.code == 200){
-                            self.doPayment(msg,session,function(err,msg){
-                                console.log(msg);
-
-                                var channel = self.GetHallChannel(gid);
-                                var channelService = channel.__channelService__;
-                                if (channelService){
-                                    console.log(channel.getMember(session.uid));
-                                    channelService.pushMessageByUids(
-                                        'onDoPayment',
-                                        msg,
-                                        [channel.getMember(session.uid)]);
-                                }
-
-
-                            });
-                        }else{
-//                            next(null, {code: 500});
-                        }
-                    });
-            }
-
-            next(null,{code:200});
-
-        }else{
-            next(null,{code:200});
-        }
-    });
-};
-*/
