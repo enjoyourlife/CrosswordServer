@@ -230,7 +230,7 @@ GMySQL.prototype.addGold = function(msg,next) {
 
 };
 
-GMySQL.prototype.addSilver = function(msg,next) {
+GMySQL.prototype.setSilver = function(msg,next) {
 
     var self = this;
 
@@ -244,7 +244,7 @@ GMySQL.prototype.addSilver = function(msg,next) {
         if (gold==null){
             sql = 'INSERT INTO crossword (uid,silver) VALUES ('+uid+','+sum+')';
         }else{
-            sum = (gold+val);
+//            sum = (gold+val);
             sql = 'UPDATE crossword SET silver='+sum+' WHERE uid='+uid;
         }
 

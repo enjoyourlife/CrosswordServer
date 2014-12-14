@@ -276,7 +276,7 @@ Handler.prototype.register = function(msg, session, next) {
     var self = this;
     var SQLInitUser = function(insertId)
     {
-        var sql = 'INSERT INTO crossword (uid, gold) VALUES (' + insertId + ',500)';
+        var sql = 'INSERT INTO crossword (uid, gold,silver) VALUES (' + insertId + ',500,3000)';
         mysql.Query(sql,function(rows){
             self.login(msg,session,next);
             mysql.End();
@@ -483,6 +483,18 @@ Handler.prototype.getinfo = function(msg, session, next) {
     }
     var mysql = new GMySQL();
     mysql.info({uid:uid,gid:gid},next);
+};
+
+Handler.prototype.setSilver = function(msg, session, next) {
+    var gid = session.get('gid');
+    var uid = session.get('uid');
+    var val = msg.val;
+    if (!uid || !gid){
+        next(null, {code: 500});
+        return;
+    }
+    var mysql = new GMySQL();
+    mysql.setSilver({uid:uid,gid:gid,val:val},next);
 };
 
 Handler.prototype.setScore = function(msg, session, next) {
