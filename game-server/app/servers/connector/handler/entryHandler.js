@@ -371,7 +371,11 @@ Handler.prototype.login = function(msg, session, next) {
 //                self.dologin(uid,info,msg,session,next);
             }else if (!verify){
                 msg.sex = 1;
-                msg.nick = 'Guest';
+                if (plat == 'apple'){
+                    msg.nick = 'Guest';
+                }else{
+                    msg.nick = msg.usr;
+                }
                 msg.pwd = pwd;
                 self.register(msg, session, next);
             }else{
